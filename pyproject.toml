@@ -1,0 +1,101 @@
+[build-system]
+requires = ["setuptools>=69", "wheel", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag_app"
+description = "LangGraph custom graph project"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [
+  { name = "LJackson412" }
+]
+keywords = ["rag", "langchain", "langgraph"]
+dynamic = ["version"]
+
+dependencies = [
+  # LangChain / LangGraph - v1-Linie
+  "langchain>=1.0,<2.0",
+  "langchain-core>=1.0,<2.0",
+  "langchain-community>=0.4.1,<1.0",
+  "langgraph>=1.0,<2.0",
+
+  # Model-Integrationen (v1-kompatibel)
+  "langchain-openai>=1.0.0,<2.0",
+
+  # Vektorspeicher (v1-Paket)
+  "langchain-chroma>=1.0.0,<2.0",
+
+  # PDFs 
+  "pypdf>=1.24.0",
+  "pdf2image",
+
+  "python-dotenv>=1.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "pytest-asyncio>=0.23.0",
+  "langgraph-cli[inmem]>=0.4.7",
+  "mypy>=1.11.1",
+  "black",
+  "ruff"
+]
+
+[tool.setuptools_scm]
+fallback_version = "0.1.0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+rag_app = ["py.typed"]
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto" # async-Tests automatisch erkennen
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = [
+  "^data/",
+  "^dist/",
+  "^build/",
+  "^\\.venv/",
+  "^\\.mypy_cache/",
+]
+
+plugins = ["pydantic.mypy"]
+
+[tool.black]
+line-length = 88          
+target-version = ["py312"]
+include = "src/|tests/"
+exclude = '''
+(
+  /(\.venv|\.git|\.mypy_cache|dist|build|__pycache__)/
+)
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [
+  ".git",
+  ".mypy_cache",
+  ".ruff_cache",
+  ".venv",
+  "build",
+  "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E203", "E266", "E501", "B905"]  # Beispiel
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+
