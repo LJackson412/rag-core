@@ -1,4 +1,4 @@
-EXTRACT_DATA_PROMPT = """
+EXTRACT_DATA_FROM_PDF_PROMPT = """
 You receive a single document page as an image.
 Extract all visible content according to the provided schema.\n\n
 General rules:\n
@@ -12,4 +12,13 @@ Chunking and structure:\n
 Output requirements:\n
 - If a category does not occur on the page, leave the answer blank.
 - Always return tables (including table-like screenshots or diagrams with rows and columns) as structured HTML in the `tables` list, not as figures.
+"""
+
+
+EXTRACT_DATA_FROM_DOCS_PROMPT = """
+You receive the plain text content of a single document section:\n\n
+Output requirements:\n
+- Follow the provided schema exactly.\n
+Document section:\n\n
+{content}\n
 """

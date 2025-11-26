@@ -2,11 +2,11 @@ from typing import Generator, TypedDict
 
 import pytest
 from langchain_core.runnables import RunnableConfig
+from rag_app.llm_index.config import IndexConfig
+from rag_app.llm_index.graph import graph as index_graph
+from rag_app.llm_index.state import InputIndexState
 
 from rag_app.factory.factory import build_vstore
-from rag_app.index.config import IndexConfig
-from rag_app.index.graph import graph as index_graph
-from rag_app.index.state import InputIndexState
 from rag_app.retrieval.graph import graph as retrieval_graph
 from rag_app.retrieval.state import InputRetrievalState
 

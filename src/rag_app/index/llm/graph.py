@@ -4,10 +4,15 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
 from rag_app.factory.factory import abuild_vstore, build_chat_model
-from rag_app.index.config import IndexConfig
-from rag_app.index.extractor import extract_from_pdf
-from rag_app.index.schema import ExtractedData, LLMExtractedData, map_to_docs
-from rag_app.index.state import InputIndexState, OutputIndexState, OverallIndexState
+from rag_app.index.llm.config import IndexConfig
+from rag_app.index.llm.extractor import extract_from_pdf
+from rag_app.index.llm.mapping import map_to_docs
+from rag_app.index.llm.schema import ExtractedData, LLMExtractedData
+from rag_app.index.llm.state import (
+    InputIndexState,
+    OutputIndexState,
+    OverallIndexState,
+)
 from rag_app.utils.utils import make_chunk_id
 
 

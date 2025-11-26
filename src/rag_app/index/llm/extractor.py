@@ -10,10 +10,12 @@ from langchain_core.messages import HumanMessage
 from openai import ContentFilterFinishReasonError, LengthFinishReasonError
 from pdf2image import convert_from_path
 from PIL import Image
-from pydantic import BaseModel
 from pypdf import PdfReader
 
-from rag_app.index.schema import ExtractedData
+from rag_app.index.llm.schema import (
+    ExtractedData,
+    LLMExtractedData,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +45,14 @@ def _get_pdf_metadata(pdf_path: str) -> dict[str, Any]:
     return dict(info)
 
 
+# Todo: Mapping auf ExtractedData in "schema.py"?
+
+
 async def extract_from_pdf(
     pdf_path: str,
     llm: BaseChatModel,
     extract_data_prompt: str,
-    extraction_data: type[BaseModel],
+    extraction_data: type[LLMExtractedData],
 ) -> list[ExtractedData]:
 
     pdf_imgs = await asyncio.to_thread(_pdf_to_image, pdf_path)
@@ -78,7 +83,7 @@ async def extract_from_pdf(
     # their tokens can accumulate and exceed the TPM limit before the rate limiter kicks in.
     # Therefore, max_concurrency limits the actual parallelism and prevents such TPM bursts.
     extracted_data = cast(
-        list[ExtractedData],
+        list[LLMExtractedData],
         await structured_llm.abatch(
             inputs,
             config={"max_concurrency": 2},
@@ -109,7 +114,7 @@ async def extract_from_pdf(
             **base_metadata,
             **pdf_metadata,
             "source": pdf_path,
-            "page_number": base_metadata.get("page_number", page_number),
+            "page": base_metadata.get("page", page_number),
         }
         enriched_data.append(
             ExtractedData(

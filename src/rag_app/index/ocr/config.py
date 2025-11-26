@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.index.prompts import EXTRACT_DATA_PROMPT
+from rag_app.prompts.prompts import EXTRACT_DATA_FROM_DOCS_PROMPT
 
 T = TypeVar("T", bound="IndexConfig")
 
@@ -46,7 +46,7 @@ class IndexConfig(BaseModel):
         ),
     ]
     extract_data_prompt: str = Field(
-        default=EXTRACT_DATA_PROMPT,
+        default=EXTRACT_DATA_FROM_DOCS_PROMPT,
         description="The system prompt used for generating responses.",
         json_schema_extra={
             "langgraph_nodes": ["extract_node"],

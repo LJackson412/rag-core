@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
-from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
 
 class BaseAttributes(BaseModel):
     language: Annotated[
-        str,
+        Literal["de", "eng", "n/a"],
         Field(
             description="Detected document segment language; all outputs must use this language.",
         ),
@@ -37,9 +36,7 @@ class BaseAttributes(BaseModel):
         list[str],
         Field(
             default_factory=list,
-            description=(
-                "List of short tags to enrich this section with metadata, "
-            ),
+            description=("List of short tags to enrich this section with metadata, "),
         ),
     ]
 
@@ -224,6 +221,8 @@ class LLMExtractedData(BaseModel):
             ),
         ),
     ]
+
+
 class ExtractedData(LLMExtractedData):
     metadata: Annotated[
         dict[str, Any],
@@ -232,52 +231,3 @@ class ExtractedData(LLMExtractedData):
             description="Additional metadata such as source, page number or PDF information.",
         ),
     ]
-
-
-def map_to_docs(data: list[ExtractedData]) -> list[Document]:
-    docs: list[Document] = []
-
-    def add_chunk(
-        chunk: BaseAttributes,
-        chunk_type: str,
-        page_metadata: dict[str, Any],
-        extra_metadata: dict[str, Any] | None = None,
-    ) -> None:
-        metadata: dict[str, Any] = {
-            **page_metadata,
-            "chunk_type": chunk_type,
-            "language": chunk.language,
-            "title": chunk.title,  # (you had "titel" here)
-            "extracted_content": getattr(chunk, "extracted_content", None),
-            "labels": chunk.labels,
-            "category": getattr(chunk, "category", None),
-        }
-        if extra_metadata:
-            metadata.update(extra_metadata)
-
-        docs.append(
-            Document(
-                page_content=chunk.retrieval_summary,
-                metadata=metadata,
-            )
-        )
-
-    for page_data in data:
-        page_metadata = page_data.metadata
-
-        for text_chunk in page_data.texts:
-            add_chunk(text_chunk, "text", page_metadata)
-
-        for fig in page_data.figures:
-            add_chunk(fig, "figure", page_metadata)
-
-        for table in page_data.tables:
-            add_chunk(table, "table_or_list", page_metadata)
-
-        for code_block in page_data.code_or_formulas:
-            add_chunk(code_block, "code_or_formula", page_metadata)
-
-        for other in page_data.others:
-            add_chunk(other, "other", page_metadata)
-
-    return docs

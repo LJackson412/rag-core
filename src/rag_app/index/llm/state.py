@@ -3,7 +3,7 @@ from typing import Annotated
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
-from rag_app.index.schema import ExtractedData
+from rag_app.index.llm.schema import ExtractedData
 
 
 class InputIndexState(BaseModel):

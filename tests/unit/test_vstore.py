@@ -1,17 +1,17 @@
 from langchain_core.runnables import RunnableConfig
 
 from rag_app.factory.factory import build_vstore
-from rag_app.index.config import IndexConfig
+from rag_app.index.llm.config import IndexConfig
 from rag_app.utils.utils import pretty_print_docs
 
 if __name__ == "__main__":
 
-    config = RunnableConfig(
-        configurable={
-            "doc_id": "DB_ZB_25_Test",
-            "collection_id": "DB_ZB_Test",
-        }
-    )
+    # config = RunnableConfig(
+    #     configurable={
+    #         "doc_id": "DB_ZB_25_Test",
+    #         "collection_id": "DB_ZB_Test",
+    #     }
+    # )
 
     config = RunnableConfig(
         configurable={"doc_id": "DB_ZB_25", "collection_id": "DB_ZB"}

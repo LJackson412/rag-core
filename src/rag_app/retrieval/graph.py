@@ -62,9 +62,9 @@ async def retrieve_docs(
     retriever = vstore.as_retriever(
         search_type="similarity", search_kwargs={"k": k, "filter": {"doc_id": doc_id}}
     )
-    
+
     if include_original_question:
-        queries = [user_question] + state.llm_questions 
+        queries = [user_question] + state.llm_questions
         docs_per_query = await retriever.abatch(queries)
     else:
         docs_per_query = await retriever.abatch(state.llm_questions)
@@ -138,8 +138,7 @@ async def generate_answer(
     )
 
     strucuterd_llm = build_chat_model(generate_answer_model).with_structured_output(
-        LLMAnswer,
-        include_raw=True
+        LLMAnswer, include_raw=True
     )
 
     chain = prompt | strucuterd_llm
@@ -174,18 +173,21 @@ async def generate_answer(
         "docs": _prepare_docs_for_prompt(filtered_docs),
     }
 
-    result =  await chain.ainvoke(inputs)
-    
+    result = await chain.ainvoke(inputs)
+
     ai_message = result["raw"]
     llm_answer = cast(LLMAnswer, result["parsed"])
-    
 
     chunk_ids = llm_answer.chunk_ids
     llm_evidence_docs = [
         doc for doc in filtered_docs if doc.metadata.get("chunk_id") in chunk_ids
     ]
 
-    return {"llm_answer": llm_answer, "llm_evidence_docs": llm_evidence_docs, "messages" : ai_message}
+    return {
+        "llm_answer": llm_answer,
+        "llm_evidence_docs": llm_evidence_docs,
+        "messages": ai_message,
+    }
 
 
 builder = StateGraph(

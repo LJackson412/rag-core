@@ -17,6 +17,8 @@ class LLMQuestions(BaseModel):
             ),
         ),
     ]
+
+
 class LLMDecision(BaseModel):
     is_relevant: Annotated[
         bool,
@@ -28,6 +30,8 @@ class LLMDecision(BaseModel):
             ),
         ),
     ]
+
+
 class LLMAnswer(BaseModel):
     answer: Annotated[
         str,

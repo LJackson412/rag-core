@@ -29,6 +29,7 @@ dependencies = [
   # PDFs 
   "pypdf>=1.24.0",
   "pdf2image",
+  "pymupdf",
 
   "python-dotenv>=1.0.1"
 ]

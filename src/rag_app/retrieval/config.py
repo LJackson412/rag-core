@@ -105,10 +105,7 @@ class RetrievalConfig(BaseModel):
     include_original_question: bool = Field(
         default=True,
         description="If false only llm generated questions used for retrieval",
-        json_schema_extra={
-            "langgraph_nodes": ["retrieve"]
-        },
-        
+        json_schema_extra={"langgraph_nodes": ["retrieve"]},
     )
     compress_docs_model: Annotated[
         Literal["gpt-4.1", "gpt-4.1-mini"],

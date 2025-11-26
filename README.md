@@ -50,6 +50,7 @@ Example Run 2:
 
 * `collection_id: DB_ZB_Pages`
 * `path: ./data/DB_ZB25_S73.pdf`
+* `path: ./data/Test_Maßnahme_1.pdf`
 * `doc_id: DB_ZB25_S73`
 
 Once indexed, you can query both the collection and individual documents. You can also copy your own PDFs into `./data` and index them.
