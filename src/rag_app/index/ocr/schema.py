@@ -5,7 +5,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 
 
-class BaseAttributes(BaseModel):
+class BaseLLMSegmentAttributes(BaseModel):
     language: Annotated[
         Literal["de", "eng", "n/a"],
         Field(
@@ -43,7 +43,7 @@ class BaseAttributes(BaseModel):
     ]
 
 
-class Text(BaseAttributes):
+class LLMTextSegment(BaseLLMSegmentAttributes):
     category: Annotated[
         str,
         Field(
@@ -56,7 +56,7 @@ class Text(BaseAttributes):
     ]
 
 
-class Image(BaseAttributes):
+class LLMImageSegment(BaseLLMSegmentAttributes):
     category: Annotated[
         str,
         Field(
@@ -70,7 +70,7 @@ class Image(BaseAttributes):
     ]
 
 
-class Table(BaseAttributes):
+class LLMTableSegment(BaseLLMSegmentAttributes):
     category: Annotated[
         str,
         Field(
@@ -83,7 +83,7 @@ class Table(BaseAttributes):
     ]
 
 
-class DocumentSegment(BaseModel):
+class BaseSegmentAttributes(BaseModel):
     extracted_content: Annotated[
         str,
         Field(
@@ -94,34 +94,38 @@ class DocumentSegment(BaseModel):
         dict[str, Any],
         Field(
             default_factory=dict,
-            description="Additional metadata such as source, page number or PDF information.",
+            description="",
         ),
     ]
-    text: Annotated[
-        Text | None,
+    
+class TextSegment(BaseSegmentAttributes):
+    llm_text_segment: Annotated[
+        LLMTextSegment,
         Field(
-            default=None,
             description=(
-                "List of semantically coherent document sections "
-                "(e.g. heading plus associated paragraph, individual paragraphs, captions, lists). "
-                "Split the content so that each entry is a meaningful RAG chunk "
-                "for question-answering systems."
+              ""
             ),
         ),
     ]
-    image: Annotated[
-        Image | None,
+
+
+
+class ImageSegment(BaseSegmentAttributes):
+    llm_image_segment: Annotated[
+        LLMImageSegment,
         Field(
-            default=None,
             description=("List of detected figures and graphical elements"),
         ),
     ]
-    table: Annotated[
-        Table | None,
+
+
+class TableSegment(BaseSegmentAttributes):
+    llm_table_segment: Annotated[
+        LLMTableSegment,
         Field(
-            default=None,
             description=(
                 "List of detected tables and lists with a structured HTML representation."
             ),
         ),
     ]
+

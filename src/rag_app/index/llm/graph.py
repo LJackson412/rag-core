@@ -1,9 +1,11 @@
+import asyncio
+
 from langchain_community.vectorstores.utils import filter_complex_metadata
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.factory.factory import abuild_vstore, build_chat_model
+from rag_app.factory.factory import build_chat_model, build_vstore
 from rag_app.index.llm.config import IndexConfig
 from rag_app.index.llm.extractor import extract_from_pdf
 from rag_app.index.llm.mapping import map_to_docs
@@ -42,7 +44,7 @@ async def save(
     embedding_model = index_config.embedding_model
     extract_model = index_config.extract_model
 
-    vstore = await abuild_vstore(embedding_model, collection_id)
+    vstore = await asyncio.to_thread(build_vstore, embedding_model, collection_id)
 
     docs = map_to_docs(state.extracted_data)
     filterd_docs = filter_complex_metadata(docs)

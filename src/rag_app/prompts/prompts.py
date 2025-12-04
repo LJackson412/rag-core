@@ -29,3 +29,12 @@ You receive an image, extarct the Data for the provided schema.\n\n
 Output requirements:\n
 - Follow the provided schema exactly.\n
 """
+
+
+GEN_TABLE_METADATA_PROMPT = """
+You receive an Table, extarct the Data for the provided schema.\n\n
+Output requirements:\n
+- Follow the provided schema exactly.\n
+Table:\n\n
+{content}\n
+"""

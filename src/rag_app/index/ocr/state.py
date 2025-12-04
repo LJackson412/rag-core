@@ -1,17 +1,16 @@
-from typing import Annotated
+from operator import add
+from typing import Annotated, Any
 
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
-from rag_app.index.ocr.schema import DocumentSegment
-from rag_app.loader.loader import PDFImage, PDFText
+from rag_app.index.ocr.schema import ImageSegment, TableSegment, TextSegment
 
 
 class InputIndexState(BaseModel):
     path: Annotated[
         str,
         Field(
-            ...,
             description=(
                 "Absolute or repo-relative filesystem path to the PDF that should be indexed. "
                 "The path is used by the extractor node to read the document before creating RAG chunks."
@@ -21,26 +20,8 @@ class InputIndexState(BaseModel):
 
 
 class OutputIndexState(BaseModel):
-    texts: Annotated[
-        list[PDFText] | None,
-        Field(
-            default_factory=list,
-            description=(
-                "every page one text"
-            ),
-        ),
-    ]
-    imgs:  Annotated[
-        list[PDFImage] | None,
-        Field(
-            default_factory=list,
-            description=(
-                "imgs"
-            ),
-        ),
-    ]
-    document_segments: Annotated[
-        list[DocumentSegment],
+    text_segments: Annotated[
+        list[TextSegment],
         Field(
             default_factory=list,
             description=(
@@ -49,6 +30,28 @@ class OutputIndexState(BaseModel):
             ),
         ),
     ]
+    table_segments: Annotated[
+        list[TableSegment],
+        Field(
+            default_factory=list,
+            description=(
+                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
+                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+            ),
+        ),
+    ]
+    image_segments: Annotated[
+        list[ImageSegment],
+        add,  # <- Reducer: alte Liste + neue Liste
+        Field(
+            default_factory=list,
+            description=(
+                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
+                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+            ),
+        ),
+    ]
+
     index_docs: Annotated[
         list[Document],
         Field(
@@ -63,3 +66,12 @@ class OutputIndexState(BaseModel):
 
 class OverallIndexState(InputIndexState, OutputIndexState):
     """Combined input/output schema used as the shared state across the graph."""
+    document_metadata: Annotated[
+        dict[str, Any],
+        Field(
+            default_factory=dict,
+            description=(
+                "every page one text"
+            ),
+        ),
+    ]

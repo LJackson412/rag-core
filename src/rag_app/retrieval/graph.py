@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Sequence
 from typing import Any, cast
 
@@ -7,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.factory.factory import abuild_vstore, build_chat_model
+from rag_app.factory.factory import build_chat_model, build_vstore
 from rag_app.retrieval.config import RetrievalConfig
 from rag_app.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
 from rag_app.retrieval.state import (
@@ -57,7 +58,7 @@ async def retrieve_docs(
     include_original_question = retrieval_config.include_original_question
     user_question = cast(str, state.messages[-1].content)
 
-    vstore = await abuild_vstore(embedding_model, collection_id)
+    vstore = await asyncio.to_thread(build_vstore, embedding_model, collection_id)
 
     retriever = vstore.as_retriever(
         search_type="similarity", search_kwargs={"k": k, "filter": {"doc_id": doc_id}}

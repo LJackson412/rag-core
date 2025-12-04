@@ -1,4 +1,3 @@
-import asyncio
 
 from langchain_chroma import Chroma
 from langchain_core.rate_limiters import InMemoryRateLimiter
@@ -29,20 +28,6 @@ def build_chat_model(
 
 def build_embeddings(model_name: str) -> OpenAIEmbeddings:
     return OpenAIEmbeddings(model=model_name, openai_api_key=settings.API_KEY)
-
-
-async def abuild_vstore(
-    embedding_model_name: str,
-    collection_name: str = "chroma_collection",
-    persist_directory: str = ".chroma_directory",
-) -> Chroma:
-    embedding_model = build_embeddings(embedding_model_name)
-    return await asyncio.to_thread(
-        Chroma,
-        collection_name=collection_name,
-        persist_directory=persist_directory,
-        embedding_function=embedding_model,
-    )
 
 
 def build_vstore(
