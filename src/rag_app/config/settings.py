@@ -12,7 +12,7 @@ class Settings:
     POPPLER_PATH = os.getenv("POPPLER_PATH")
     TESSERACT_PATH = os.getenv("TESSERACT_PATH")
     TESSDATA_PATH = os.getenv("TESSDATA_PATH")
-    
+
     if POPPLER_PATH:
         os.environ["PATH"] += os.pathsep + POPPLER_PATH
     if TESSERACT_PATH:

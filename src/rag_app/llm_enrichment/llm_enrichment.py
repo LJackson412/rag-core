@@ -41,7 +41,9 @@ def _build_llm_img_inputs(
         inputs.append(messages)
     return inputs
 
+
 TModel = TypeVar("TModel", bound=BaseModel)
+
 
 async def gen_llm_metadata(
     texts_or_imgs: Sequence[str],
@@ -49,7 +51,7 @@ async def gen_llm_metadata(
     gen_prompt: str,
     gen_data: Type[TModel],
     imgs: bool = False,
-    ext: str = "png"
+    ext: str = "png",
 ) -> list[TModel]:
     """Extrahiere strukturierte Daten aus Text- oder Bild-Chunks."""
 
@@ -63,5 +65,5 @@ async def gen_llm_metadata(
     else:
         inputs = _build_llm_text_inputs(texts_or_imgs, gen_prompt)
 
-    res =  cast(list[TModel], await structured_llm.abatch(inputs))
+    res = cast(list[TModel], await structured_llm.abatch(inputs))
     return res

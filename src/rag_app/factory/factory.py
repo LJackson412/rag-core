@@ -1,4 +1,3 @@
-
 from langchain_chroma import Chroma
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings

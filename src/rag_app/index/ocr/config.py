@@ -41,12 +41,10 @@ class IndexConfig(BaseModel):
     ]
     mode: Annotated[
         Literal["text", "images", "tables", "all"],
-            Field(
+        Field(
             default="all",
-            description=(
-                ""
-            ),
-        )
+            description=(""),
+        ),
     ]
     gen_metadata_model: Annotated[
         Literal["gpt-4o", "gpt-4o-mini"],
@@ -70,19 +68,15 @@ class IndexConfig(BaseModel):
     splitter_seperators: list[str] = Field(
         default=["\n\n", "\n", " ", ""],
         description="",
-        json_schema_extra={
-            "langgraph_nodes": ["extract_text"]
-        },
+        json_schema_extra={"langgraph_nodes": ["extract_text"]},
     )
     splitter_chunk_size: int = Field(
         default=900,
         description="",
-        json_schema_extra={
-            "langgraph_nodes": ["extract_text"]
-        },
+        json_schema_extra={"langgraph_nodes": ["extract_text"]},
     )
     # ------------------------------------------------------------------------
-    
+
     gen_img_metadata_prompt: str = Field(
         default=GEN_IMG_METADATA_PROMPT,
         description="The system prompt used for generating responses.",

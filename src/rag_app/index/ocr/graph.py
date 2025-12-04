@@ -46,18 +46,16 @@ async def extract_metadata(
     collection_id = index_config.collection_id
 
     base_metadata = load_pdf_metadata(state.path)
-    
+
     metadata = {
         **base_metadata,
         "doc_id": doc_id,
         "collection_id": collection_id,
         "embedding_model": embedding_model,
-        "gen_metadata_model": gen_metadata_model,   
+        "gen_metadata_model": gen_metadata_model,
     }
-   
-    return {
-        "document_metadata": metadata 
-    }
+
+    return {"document_metadata": metadata}
 
 
 async def extract_text(
@@ -71,13 +69,12 @@ async def extract_text(
     gen_metadata_model = index_config.gen_metadata_model
     separators = index_config.splitter_seperators
     chunk_size = index_config.splitter_chunk_size
-    
+
     doc_id = index_config.doc_id
     collection_id = index_config.collection_id
-    
+
     pdf_texts = load_texts_from_pdf(state.path)
-    
-    
+
     splitter = RecursiveCharacterTextSplitter(
         separators=separators, chunk_size=chunk_size
     )
@@ -94,7 +91,7 @@ async def extract_text(
         chunks,
         build_chat_model(gen_metadata_model),
         gen_metadata_prompt,
-        LLMTextSegment
+        LLMTextSegment,
     )
 
     document_segments = []
@@ -113,23 +110,21 @@ async def extract_text(
             metadata={
                 **state.document_metadata,
                 "chunk_type": "Text",
-                "page_number": chunk_page, 
+                "page_number": chunk_page,
                 "chunk_index": chunk_index,
-                "chunk_id": chunk_id
+                "chunk_id": chunk_id,
             },
-            llm_text_segment=llm_text_segment
+            llm_text_segment=llm_text_segment,
         )
         document_segments.append(document_segment)
 
-    return {
-        "document_segments": document_segments
-    }
+    return {"text_segments": document_segments}
 
-    
+
 async def extract_imgs(
     state: OverallIndexState,
     config: RunnableConfig,
-) ->  dict[str, list[ImageSegment]]:
+) -> dict[str, list[ImageSegment]]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -145,8 +140,8 @@ async def extract_imgs(
         img_urls,
         build_chat_model(gen_metadata_model),
         gen_metadata_prompt,
-        LLMImageSegment,   
-        imgs=True
+        LLMImageSegment,
+        imgs=True,
     )
 
     document_segments = []
@@ -161,29 +156,26 @@ async def extract_imgs(
         )
 
         document_segment = ImageSegment(
-            extracted_content=img_url,  
+            extracted_content=img_url,
             metadata={
                 **state.document_metadata,
                 "chunk_type": "Image",
                 "page_number": img.page_number,
                 "ext": img.ext,
                 "chunk_index": chunk_index,
-                "chunk_id": chunk_id
+                "chunk_id": chunk_id,
             },
             llm_image_segment=llm_img_segment,
         )
         document_segments.append(document_segment)
 
-    return {
-        "document_segments": document_segments
-    }
-
+    return {"image_segments": document_segments}
 
 
 async def extract_tables(
     state: OverallIndexState,
     config: RunnableConfig,
-) ->  dict[str, list[TableSegment]]:
+) -> dict[str, list[TableSegment]]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -193,7 +185,7 @@ async def extract_tables(
     collection_id = index_config.collection_id
 
     pdf_tables = await asyncio.to_thread(load_tables_from_pdf, state.path)
-    
+
     html_or_text_tables = []
     for t in pdf_tables:
         if t.html is not None:
@@ -202,17 +194,17 @@ async def extract_tables(
             html_or_text_tables.append(t.text)
         else:
             html_or_text_tables.append("table extraction failed")
-    
+
     llm_table_segments = await gen_llm_metadata(
         html_or_text_tables,
         build_chat_model(gen_metadata_model),
         gen_metadata_prompt,
-        LLMTableSegment
+        LLMTableSegment,
     )
 
     document_segments = []
     for chunk_index, (pdf_table, llm_table_segment) in enumerate(
-        zip(pdf_tables, llm_table_segments , strict=True)
+        zip(pdf_tables, llm_table_segments, strict=True)
     ):
         chunk_id = make_chunk_id(
             chunk_type="Table",
@@ -222,36 +214,35 @@ async def extract_tables(
         )
 
         document_segment = TableSegment(
-            extracted_content=pdf_table.html, 
+            extracted_content=pdf_table.html,
             metadata={
                 **state.document_metadata,
                 "chunk_type": "Table",
                 "page_number": pdf_table.page_number,
-                "table_text" : pdf_table.text,
+                "table_text": pdf_table.text,
                 "chunk_index": chunk_index,
-                "chunk_id": chunk_id
+                "chunk_id": chunk_id,
             },
-            llm_table_segment=llm_table_segment
+            llm_table_segment=llm_table_segment,
         )
         document_segments.append(document_segment)
 
-    return {
-        "document_segments": document_segments
-    }
+    return {"table_segments": document_segments}
 
-    
+
 async def save(
     state: OverallIndexState, config: RunnableConfig
 ) -> dict[str, list[Document]]:
-    
+
     index_config = IndexConfig.from_runnable_config(config)
-    
+
     collection_id = index_config.collection_id
     embedding_model = index_config.embedding_model
 
     vstore = await asyncio.to_thread(build_vstore, embedding_model, collection_id)
 
-    docs = map_to_docs(state.document_segments)
+    segments = state.text_segments + state.image_segments + state.table_segments
+    docs = map_to_docs(segments)
     index_docs = filter_complex_metadata(docs)
 
     if index_docs:
@@ -260,10 +251,7 @@ async def save(
     return {"index_docs": index_docs}
 
 
-def route_by_mode(
-    state: OverallIndexState, 
-    config: RunnableConfig
-) -> list[str]:
+def route_by_mode(state: OverallIndexState, config: RunnableConfig) -> list[str]:
     index_config = IndexConfig.from_runnable_config(config)
 
     if index_config.mode == "text":
@@ -271,12 +259,11 @@ def route_by_mode(
     elif index_config.mode == "images":
         return ["extract_imgs"]
     elif index_config.mode == "tables":
-         return ["extract_tables"]
+        return ["extract_tables"]
     elif index_config.mode == "all":
         return ["extract_imgs", "extract_text", "extract_tables"]
     else:
         raise ValueError(f"Unsupported index mode: {index_config.mode}")
-
 
 
 builder = StateGraph(
@@ -296,7 +283,7 @@ builder.add_node("save", save)
 builder.add_edge(START, "extract_metadata")
 
 builder.add_conditional_edges(
-    "extract_metadata",  
+    "extract_metadata",
     route_by_mode,
     ["extract_imgs", "extract_text", "extract_tables"],
 )

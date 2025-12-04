@@ -9,7 +9,7 @@ from unstructured.partition.pdf import partition_pdf
 @dataclass(slots=True)
 class PDFImage:
     img_base64: str
-    ext: str          # z.B. "png", "jpeg", "jpg"
+    ext: str  # z.B. "png", "jpeg", "jpg"
     page_number: int
 
     @property
@@ -25,14 +25,13 @@ class PDFImage:
 class PDFText:
     text: str
     page_number: int
-    
+
 
 @dataclass(slots=True)
 class PDFTable:
     text: str | None
     html: str | None
     page_number: int | None
-
 
 
 def load_pdf_metadata(pdf_path: str) -> Dict[str, Any]:
@@ -68,6 +67,7 @@ def load_texts_from_pdf(pdf_path: str) -> List[PDFText]:
 
     return pages
 
+
 def load_imgs_from_pdf(pdf_path: str) -> List[PDFImage]:
     images: List[PDFImage] = []
 
@@ -91,33 +91,29 @@ def load_imgs_from_pdf(pdf_path: str) -> List[PDFImage]:
     return images
 
 
-
 def load_tables_from_pdf(pdf_path: str) -> list[PDFTable]:
     "detectron2_onnx: used for  document layout"
     "tesseract: for ocr"
-    
+
     elements = partition_pdf(
-        filename=pdf_path,                  
-        strategy="hi_res",                                     
+        filename=pdf_path,
+        strategy="hi_res",
         extract_images_in_pdf=False,
         infer_table_structure=True,
         pdf_infer_table_structure=True,
-        languages=["eng", "deu"]                    
+        languages=["eng", "deu"],
     )
-    
+
     tables = [e for e in elements if e.category == "Table"]
-    
+
     pdf_tables = []
     for t in tables:
-        pdf_table = PDFTable(
-            t.text,
-            t.metadata.text_as_html,
-            t.metadata.page_number
-        )
-        
+        pdf_table = PDFTable(t.text, t.metadata.text_as_html, t.metadata.page_number)
+
         pdf_tables.append(pdf_table)
-    
+
     return pdf_tables
+
 
 def load_page_as_image_from_pdf(pdf_path: str) -> list[str]:
     "load every pdf page as image as base64"

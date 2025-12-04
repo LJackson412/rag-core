@@ -66,12 +66,11 @@ class OutputIndexState(BaseModel):
 
 class OverallIndexState(InputIndexState, OutputIndexState):
     """Combined input/output schema used as the shared state across the graph."""
+
     document_metadata: Annotated[
         dict[str, Any],
         Field(
             default_factory=dict,
-            description=(
-                "every page one text"
-            ),
+            description=("every page one text"),
         ),
     ]

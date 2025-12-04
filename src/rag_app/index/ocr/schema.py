@@ -97,17 +97,15 @@ class BaseSegmentAttributes(BaseModel):
             description="",
         ),
     ]
-    
+
+
 class TextSegment(BaseSegmentAttributes):
     llm_text_segment: Annotated[
         LLMTextSegment,
         Field(
-            description=(
-              ""
-            ),
+            description=(""),
         ),
     ]
-
 
 
 class ImageSegment(BaseSegmentAttributes):
@@ -128,4 +126,3 @@ class TableSegment(BaseSegmentAttributes):
             ),
         ),
     ]
-
