@@ -52,7 +52,7 @@ async def gen_llm_structured_data_from_imgs(
     llm: BaseChatModel,
     gen_prompt: str,
     gen_data: Type[TModel]
-) -> tuple[list[TModel], list[Exception]]:
+) -> list[TModel | Exception]:
     """Extrahiere strukturierte Daten aus Bild-URLs.
 
     Gibt ein Tupel aus erfolgreichen Ergebnissen und etwaigen Fehlern zurück.
@@ -61,7 +61,7 @@ async def gen_llm_structured_data_from_imgs(
     """
 
     if not imgs_urls:
-        return [], []
+        return []
 
     structured_llm = llm.with_structured_output(gen_data)
     inputs = _build_llm_img_inputs(imgs_urls, gen_prompt)
@@ -99,7 +99,7 @@ async def gen_llm_structured_data_from_texts(
     llm: BaseChatModel,
     gen_prompt: str,
     gen_data: Type[TModel]
-) -> tuple[list[TModel], list[Exception]]:
+) -> list[TModel | Exception]:
     """Extrahiere strukturierte Daten aus Text-Chunks.
 
     Gibt ein Tupel aus erfolgreichen Ergebnissen und etwaigen Fehlern zurück.
@@ -108,7 +108,7 @@ async def gen_llm_structured_data_from_texts(
     """
     
     if not texts:
-        return [], []
+        return []
 
     structured_llm = llm.with_structured_output(gen_data)
     inputs = _build_llm_text_inputs(texts, gen_prompt)

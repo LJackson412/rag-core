@@ -11,6 +11,7 @@ from rag_app.index.llm.schema import (
     TableOrListSegment,
     TextSegment,
 )
+from rag_app.index.schema import LLMException
 
 
 class InputIndexState(BaseModel):
@@ -87,8 +88,8 @@ class OutputIndexState(BaseModel):
             ),
         ),
     ]
-    llm_errors: Annotated[
-        list[Any],
+    llm_exceptions: Annotated[
+        list[LLMException],
         add,
         Field(
             default_factory=list,

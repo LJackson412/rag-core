@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from typing import Any
 
 from langchain_community.vectorstores.utils import filter_complex_metadata
@@ -22,6 +23,7 @@ from rag_app.index.llm.state import (
     OutputIndexState,
     OverallIndexState,
 )
+from rag_app.index.schema import LLMException
 from rag_app.llm_enrichment.llm_enrichment import gen_llm_structured_data_from_imgs
 from rag_app.loader.loader import load_page_imgs_from_pdf, load_pdf_metadata
 from rag_app.utils.utils import make_chunk_id
@@ -66,7 +68,6 @@ async def llm_extract(
     
     img_urls = [img.image_url for img in pdf_page_imgs]
     
-    llm_segments: list[LLMSegments | Exception]
     llm_responses = await gen_llm_structured_data_from_imgs(
         img_urls,
         build_chat_model(extract_model),
@@ -85,11 +86,17 @@ async def llm_extract(
     for llm_response, pdf_page_img in zip(
         llm_responses, pdf_page_imgs, strict=True
     ):
-         
-        for exception in llm_response if isinstance(llm_response, Exception):
-            
-            # map to llm exception
-            pass
+        if isinstance(llm_response, Exception):
+            llm_exceptions.append(
+                LLMException(
+                    page_number=pdf_page_img.page_number,
+                    chunk_type="LLMSegments",
+                    chunk_index=chunk_index,
+                    message=str(llm_response),
+                    traceback="".join(traceback.format_exception(llm_response)),
+                )
+            )
+            continue
         
         
         for text_segment in llm_response.texts:
@@ -205,7 +212,7 @@ async def llm_extract(
         "table_segments": table_segments,
         "code_or_formula_segments": code_or_formula_segments,
         "other_segments": other_segments,
-        "llm_errors": state.llm_errors + extraction_errors,
+        "llm_exceptions": llm_exceptions
     }
 
 
