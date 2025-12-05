@@ -1,9 +1,13 @@
+import logging
 from typing import Sequence, Type, TypeVar, cast
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
+
+
+logger = logging.getLogger(__name__)
 
 
 def _build_llm_text_inputs(
@@ -49,17 +53,46 @@ async def gen_llm_structured_data_from_imgs(
     llm: BaseChatModel,
     gen_prompt: str,
     gen_data: Type[TModel]
-) -> list[TModel]:
-    """Extrahiere strukturierte Daten aus Text- oder Bild-Chunks."""
+) -> tuple[list[TModel], list[Exception]]:
+    """Extrahiere strukturierte Daten aus Bild-URLs.
+
+    Gibt ein Tupel aus erfolgreichen Ergebnissen und etwaigen Fehlern zurück.
+    Einzelne Fehler werden geloggt, die Verarbeitung wird jedoch für die
+    übrigen Einträge fortgesetzt.
+    """
 
     if not imgs_urls:
-        return []
+        return [], []
 
     structured_llm = llm.with_structured_output(gen_data)
     inputs = _build_llm_img_inputs(imgs_urls, gen_prompt)
 
-    res = cast(list[TModel], await structured_llm.abatch(inputs))
-    return res
+    raw_responses = cast(
+        list[TModel | Exception],
+        await structured_llm.abatch(inputs, return_exceptions=True),
+    )
+
+    results: list[TModel] = []
+    errors: list[Exception] = []
+    for idx, item in enumerate(raw_responses):
+        if isinstance(item, BaseModel):
+            results.append(item)
+        else:
+            err = (
+                item
+                if isinstance(item, Exception)
+                else TypeError(f"Unexpected response type: {type(item)}")
+            )
+            url = imgs_urls[idx] if idx < len(imgs_urls) else "<unknown>"
+            logger.error(
+                "LLM structured extraction failed for image index %s (url=%s)",
+                idx,
+                url,
+                exc_info=err,
+            )
+            errors.append(err)
+
+    return results, errors
 
 
 
@@ -68,14 +101,43 @@ async def gen_llm_structured_data_from_texts(
     llm: BaseChatModel,
     gen_prompt: str,
     gen_data: Type[TModel]
-) -> list[TModel]:
-    """Extrahiere strukturierte Daten aus Text- oder Bild-Chunks."""
+) -> tuple[list[TModel], list[Exception]]:
+    """Extrahiere strukturierte Daten aus Text-Chunks.
+
+    Gibt ein Tupel aus erfolgreichen Ergebnissen und etwaigen Fehlern zurück.
+    Einzelne Fehler werden geloggt, die Verarbeitung wird jedoch für die
+    übrigen Einträge fortgesetzt.
+    """
     
     if not texts:
-        return []
+        return [], []
 
     structured_llm = llm.with_structured_output(gen_data)
     inputs = _build_llm_text_inputs(texts, gen_prompt)
 
-    res = cast(list[TModel], await structured_llm.abatch(inputs))
-    return res
+    raw_responses = cast(
+        list[TModel | Exception],
+        await structured_llm.abatch(inputs, return_exceptions=True),
+    )
+
+    results: list[TModel] = []
+    errors: list[Exception] = []
+    for idx, item in enumerate(raw_responses):
+        if isinstance(item, BaseModel):
+            results.append(item)
+        else:
+            err = (
+                item
+                if isinstance(item, Exception)
+                else TypeError(f"Unexpected response type: {type(item)}")
+            )
+            text = texts[idx] if idx < len(texts) else "<unknown>"
+            logger.error(
+                "LLM structured extraction failed for text index %s (chunk=%r)",
+                idx,
+                text,
+                exc_info=err,
+            )
+            errors.append(err)
+
+    return results, errors
