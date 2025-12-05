@@ -3,7 +3,14 @@ from typing import Annotated, Any
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
-from rag_app.index.llm.schema import LLMSegments, TextSegment
+from rag_app.index.llm.schema import (
+    CodeOrFormulaSegment,
+    ImageSegment,
+    LLMSegments,
+    OtherSegment,
+    TableOrListSegment,
+    TextSegment,
+)
 
 
 class InputIndexState(BaseModel):
@@ -22,6 +29,46 @@ class InputIndexState(BaseModel):
 class OutputIndexState(BaseModel):
     text_segments: Annotated[
         list[TextSegment],
+        Field(
+            default_factory=list,
+            description=(
+                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
+                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+            ),
+        ),
+    ]
+    image_segments: Annotated[
+        list[ImageSegment],
+        Field(
+            default_factory=list,
+            description=(
+                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
+                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+            ),
+        ),
+    ]
+    table_segments: Annotated[
+        list[TableOrListSegment],
+        Field(
+            default_factory=list,
+            description=(
+                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
+                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+            ),
+        ),
+    ]
+    code_or_formula_segments: Annotated[
+        list[CodeOrFormulaSegment],
+        Field(
+            default_factory=list,
+            description=(
+                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
+                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+            ),
+        ),
+    ]
+    other_segments: Annotated[
+        list[OtherSegment],
         Field(
             default_factory=list,
             description=(
