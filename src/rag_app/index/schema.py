@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-
+# Used for both Graphs 
 class BaseLLMSegmentAttributes(BaseModel):
     language: Annotated[
         Literal["de", "eng", "n/a"],

@@ -187,7 +187,7 @@ async def generate_answer(
     return {
         "llm_answer": llm_answer,
         "llm_evidence_docs": llm_evidence_docs,
-        "messages": ai_message,
+        "messages": [ai_message],
     }
 
 

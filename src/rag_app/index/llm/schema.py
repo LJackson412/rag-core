@@ -220,3 +220,47 @@ class TextSegment(BaseSegmentAttributes):
         ),
     ]
 
+
+class ImageSegment(BaseSegmentAttributes):
+    llm_image_segment: Annotated[
+        LLMImageSegment,
+        Field(
+            description=("List of detected figures and graphical elements"),
+        ),
+    ]
+
+
+class TableOrListSegment(BaseSegmentAttributes):
+    llm_table_segment: Annotated[
+        LLMTableOrListSegment,
+        Field(
+            description=(
+                "List of detected tables and lists with a structured HTML representation."
+            ),
+        ),
+    ]
+
+
+class CodeOrFormulaSegment(BaseSegmentAttributes):
+    llm_code_or_formula_segment: Annotated[
+        LLMCodeOrFormulaSegment,
+        Field(
+            description=(
+                "List of detected code blocks and formulas (programming code, pseudocode, "
+                "mathematical and other formulas)."
+            ),
+        ),
+    ]
+
+
+class OtherSegment(BaseSegmentAttributes):
+    llm_other_segment: Annotated[
+        LLMOtherSegment,
+        Field(
+            description=(
+                "List of content that cannot be clearly assigned to text, table/list, figure, "
+                "or code/formula, but is still relevant for understanding the document."
+            ),
+        ),
+    ]
+

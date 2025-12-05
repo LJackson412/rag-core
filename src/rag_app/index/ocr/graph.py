@@ -108,7 +108,7 @@ async def extract_text(
             chunk_index=chunk_index,
         )
 
-        document_segment = TextSegment(
+        text_segment = TextSegment(
             extracted_content=chunk,
             metadata={
                 **state.document_metadata,
@@ -119,7 +119,7 @@ async def extract_text(
             },
             llm_text_segment=llm_text_segment,
         )
-        document_segments.append(document_segment)
+        document_segments.append(text_segment)
 
     return {"text_segments": document_segments}
 
@@ -157,7 +157,7 @@ async def extract_imgs(
             chunk_index=chunk_index,
         )
 
-        document_segment = ImageSegment(
+        img_segment = ImageSegment(
             extracted_content=img_url,
             metadata={
                 **state.document_metadata,
@@ -169,7 +169,7 @@ async def extract_imgs(
             },
             llm_image_segment=llm_img_segment,
         )
-        document_segments.append(document_segment)
+        document_segments.append(img_segment)
 
     return {"image_segments": document_segments}
 
@@ -215,7 +215,7 @@ async def extract_tables(
             chunk_index=chunk_index,
         )
 
-        document_segment = TableSegment(
+        table_segment = TableSegment(
             extracted_content=pdf_table.html,
             metadata={
                 **state.document_metadata,
@@ -227,7 +227,7 @@ async def extract_tables(
             },
             llm_table_segment=llm_table_segment,
         )
-        document_segments.append(document_segment)
+        document_segments.append(table_segment)
 
     return {"table_segments": document_segments}
 

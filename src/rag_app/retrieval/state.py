@@ -47,8 +47,9 @@ class OutputRetrievalState(BaseModel):
         ),
     ]
     llm_answer: Annotated[
-        LLMAnswer,
+        LLMAnswer | None,
         Field(
+            default=None,
             description=(
                 "Structured answer produced by the generate_answer node. Contains the natural-language response, supporting "
                 "quote, and the chunk_ids cited as evidence."

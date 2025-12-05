@@ -103,3 +103,14 @@ Once indexed, you can query both the collection and individual documents. You ca
 | Retrieval | `generate_answer`    | Generate final, referenced answer               | **Claude 3.5 Sonnet**          | `Gemini Pro`, `Mistral Large 2`, `Cohere Command A`  | Use **Gemini** for long/multimodal context; **Mistral** for multilingual EU needs.             |
 | Index     | `extract`            | Multimodal PDF extraction                       | **Gemini 1.5 Pro (Vision)**    | `Gemini Flash`, `Claude 3.5 Vision`, `Voyage MM-3`   | Use **Pro** for complex PDFs; **Flash** for batch jobs; **Voyage** for embedding-first setups. |
 | Index     | `save`               | Store chunks in Chroma                          | –                              | –                                                    | No LLM required.                                                                               |
+
+
+
+### Prozesse
+#### LLM-Indexer
+
+Graph-Input: 
+- State:
+  - pdf_path: Link zur PDF auf dem Server
+- Config: 
+
