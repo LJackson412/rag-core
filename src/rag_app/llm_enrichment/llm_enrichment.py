@@ -6,7 +6,6 @@ from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -72,8 +71,7 @@ async def gen_llm_structured_data_from_imgs(
         await structured_llm.abatch(inputs, return_exceptions=True),
     )
 
-    results: list[TModel] = []
-    errors: list[Exception] = []
+    results: list[TModel | Exception] = []
     for idx, item in enumerate(raw_responses):
         if isinstance(item, BaseModel):
             results.append(item)
@@ -90,9 +88,9 @@ async def gen_llm_structured_data_from_imgs(
                 url,
                 exc_info=err,
             )
-            errors.append(err)
+            results.append(err)
 
-    return results, errors
+    return results
 
 
 
@@ -120,8 +118,7 @@ async def gen_llm_structured_data_from_texts(
         await structured_llm.abatch(inputs, return_exceptions=True),
     )
 
-    results: list[TModel] = []
-    errors: list[Exception] = []
+    results: list[TModel | Exception] = []
     for idx, item in enumerate(raw_responses):
         if isinstance(item, BaseModel):
             results.append(item)
@@ -138,6 +135,6 @@ async def gen_llm_structured_data_from_texts(
                 text,
                 exc_info=err,
             )
-            errors.append(err)
+            results.append(err)
 
-    return results, errors
+    return results

@@ -66,11 +66,12 @@ async def llm_extract(
     
     img_urls = [img.image_url for img in pdf_page_imgs]
     
-    llm_segments = await gen_llm_structured_data_from_imgs(
+    llm_segments: list[LLMSegments | Exception]
+    llm_responses = await gen_llm_structured_data_from_imgs(
         img_urls,
         build_chat_model(extract_model),
         extract_prompt,
-        LLMSegments
+        LLMSegments,
     )
     
     text_segments: list[TextSegment] = []
@@ -78,10 +79,20 @@ async def llm_extract(
     table_segments: list[TableOrListSegment] = []
     code_or_formula_segments: list[CodeOrFormulaSegment] = []
     other_segments: list[OtherSegment] = []
+    llm_exceptions: list[LLMException] = []
 
     chunk_index = 0
-    for llm_segment, pdf_page_img in zip(llm_segments, pdf_page_imgs, strict=True):
-        for text_segment in llm_segment.texts:
+    for llm_response, pdf_page_img in zip(
+        llm_responses, pdf_page_imgs, strict=True
+    ):
+         
+        for exception in llm_response if isinstance(llm_response, Exception):
+            
+            # map to llm exception
+            pass
+        
+        
+        for text_segment in llm_response.texts:
             chunk_id = make_chunk_id(
                 chunk_type="Text",
                 collection_id=collection_id,
@@ -102,7 +113,7 @@ async def llm_extract(
             )
             chunk_index += 1
 
-        for image_segment in llm_segment.figures:
+        for image_segment in llm_response.figures:
             chunk_id = make_chunk_id(
                 chunk_type="Image",
                 collection_id=collection_id,
@@ -123,7 +134,7 @@ async def llm_extract(
             )
             chunk_index += 1
 
-        for table_segment in llm_segment.tables:
+        for table_segment in llm_response.tables:
             chunk_id = make_chunk_id(
                 chunk_type="Table",
                 collection_id=collection_id,
@@ -144,7 +155,7 @@ async def llm_extract(
             )
             chunk_index += 1
 
-        for code_or_formula in llm_segment.code_or_formulas:
+        for code_or_formula in llm_response.code_or_formulas:
             chunk_id = make_chunk_id(
                 chunk_type="CodeOrFormula",
                 collection_id=collection_id,
@@ -165,7 +176,7 @@ async def llm_extract(
             )
             chunk_index += 1
 
-        for other_segment in llm_segment.others:
+        for other_segment in llm_response.others:
             chunk_id = make_chunk_id(
                 chunk_type="Other",
                 collection_id=collection_id,
@@ -185,6 +196,8 @@ async def llm_extract(
                 )
             )
             chunk_index += 1
+       
+            
 
     return {
         "text_segments": text_segments,
@@ -192,6 +205,7 @@ async def llm_extract(
         "table_segments": table_segments,
         "code_or_formula_segments": code_or_formula_segments,
         "other_segments": other_segments,
+        "llm_errors": state.llm_errors + extraction_errors,
     }
 
 

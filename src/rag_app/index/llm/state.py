@@ -1,3 +1,4 @@
+from operator import add
 from typing import Annotated, Any
 
 from langchain_core.documents import Document
@@ -86,6 +87,17 @@ class OutputIndexState(BaseModel):
             ),
         ),
     ]
+    llm_errors: Annotated[
+        list[Any],
+        add,
+        Field(
+            default_factory=list,
+            description=(
+                "Errors raised by the LLM structured extraction nodes. Clients can inspect these "
+                "to selectively retry failed chunks without rerunning the entire indexing job."
+            ),
+        ),
+    ]
 
 
 class OverallIndexState(InputIndexState, OutputIndexState):
@@ -98,3 +110,4 @@ class OverallIndexState(InputIndexState, OutputIndexState):
             description=("every page one text"),
         ),
     ]
+    

@@ -61,11 +61,21 @@ class OutputIndexState(BaseModel):
             ),
         ),
     ]
+    llm_errors: Annotated[
+        list[Any],
+        add,
+        Field(
+            default_factory=list,
+            description=(
+                "Errors raised by the LLM structured extraction nodes. Clients can inspect these "
+                "to selectively retry failed chunks without rerunning the entire indexing job."
+            ),
+        ),
+    ]
 
 
 class OverallIndexState(InputIndexState, OutputIndexState):
     """Combined input/output schema used as the shared state across the graph."""
-
     document_metadata: Annotated[
         dict[str, Any],
         Field(
@@ -73,3 +83,4 @@ class OverallIndexState(InputIndexState, OutputIndexState):
             description=("every page one text"),
         ),
     ]
+ 
