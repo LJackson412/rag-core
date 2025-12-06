@@ -39,6 +39,20 @@ class IndexConfig(BaseModel):
             },
         ),
     ]
+    embedding_model: Annotated[
+        Literal["text-embedding-3-small", "text-embedding-3-large"],
+        Field(
+            default="text-embedding-3-small",
+            description=(
+                "OpenAI embedding model used for Chroma indexing. "
+                "Use 'text-embedding-3-large' when you need maximum retrieval quality."
+                "Use the same embedding model for Retrieval"
+            ),
+            json_schema_extra={
+                "langgraph_nodes": ["save"],
+            },
+        ),
+    ]
     mode: Annotated[
         Literal["text", "images", "tables", "all"],
         Field(
@@ -56,7 +70,19 @@ class IndexConfig(BaseModel):
             },
         ),
     ]
-    # Extract text config:
+    # ------------------------------------------------------------------------
+    
+    # extract text config:
+    gen_text_metadata_model: Annotated[
+        Literal["gpt-4o", "gpt-4o-mini"],
+        Field(
+            default="gpt-4o-mini",
+            description=("Multimodal model for PDF extraction. "),
+            json_schema_extra={
+                "langgraph_nodes": ["extract"],
+            },
+        ),
+    ]
     gen_text_metadata_prompt: str = Field(
         default=GEN_TEXT_METADATA_PROMPT,
         description="The system prompt used for generating responses.",
@@ -77,6 +103,17 @@ class IndexConfig(BaseModel):
     )
     # ------------------------------------------------------------------------
 
+    # extract img config:
+    gen_img_metadata_model: Annotated[
+        Literal["gpt-4o", "gpt-4o-mini"],
+        Field(
+            default="gpt-4o-mini",
+            description=("Multimodal model for PDF extraction. "),
+            json_schema_extra={
+                "langgraph_nodes": ["extract"],
+            },
+        ),
+    ]
     gen_img_metadata_prompt: str = Field(
         default=GEN_IMG_METADATA_PROMPT,
         description="The system prompt used for generating responses.",
@@ -85,6 +122,19 @@ class IndexConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
+    # ------------------------------------------------------------------------
+    
+    # extract table config:
+    gen_table_metadata_model: Annotated[
+        Literal["gpt-4o", "gpt-4o-mini"],
+        Field(
+            default="gpt-4o-mini",
+            description=("Multimodal model for PDF extraction. "),
+            json_schema_extra={
+                "langgraph_nodes": ["extract"],
+            },
+        ),
+    ]
     gen_table_metadata_prompt: str = Field(
         default=GEN_TABLE_METADATA_PROMPT,
         description="The system prompt used for generating responses.",
@@ -93,20 +143,7 @@ class IndexConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
-    embedding_model: Annotated[
-        Literal["text-embedding-3-small", "text-embedding-3-large"],
-        Field(
-            default="text-embedding-3-small",
-            description=(
-                "OpenAI embedding model used for Chroma indexing. "
-                "Use 'text-embedding-3-large' when you need maximum retrieval quality."
-                "Use the same embedding model for Retrieval"
-            ),
-            json_schema_extra={
-                "langgraph_nodes": ["save"],
-            },
-        ),
-    ]
+    # ------------------------------------------------------------------------
 
     @classmethod
     def from_runnable_config(cls: type[T], config: RunnableConfig | None = None) -> T:

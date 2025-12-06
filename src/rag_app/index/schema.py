@@ -42,7 +42,6 @@ class LLMException(BaseModel):
     ]
 
 
-# Used for both Graphs 
 class BaseLLMSegmentAttributes(BaseModel):
     language: Annotated[
         Literal["de", "eng", "n/a"],

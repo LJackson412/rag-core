@@ -90,7 +90,7 @@ async def llm_extract(
             llm_exceptions.append(
                 LLMException(
                     page_number=pdf_page_img.page_number,
-                    chunk_type="LLMSegments",
+                    chunk_type="LLMException",
                     chunk_index=chunk_index,
                     message=str(llm_response),
                     traceback="".join(traceback.format_exception(llm_response)),

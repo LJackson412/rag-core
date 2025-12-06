@@ -1,0 +1,77 @@
+@startuml
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam arrowColor black
+skinparam activityBackgroundColor lightgrey
+skinparam activityBorderColor black
+
+start
+
+:State & Config übermitteln;
+
+note left
++ element_id: str
++ controls: list[str]
+end note
+
+
+partition "Retrieval-Service" {
+
+    repeat
+
+    partition "1-Stage-Retrieval: SimilarityThresholdRetriever" {
+      
+ 
+        :Similarity Search mit Ähnlichkeits-Score ausführen;
+          if (Score >= Threshold?) then (Ja)
+            :Dokumente übernehmen;
+          else (Nein)
+            :Dokumente exkludieren;
+          endif
+        :Dokumente der Ergebnisliste hinzufügen;
+    }
+
+
+    partition "2-Stage-Retrieval: LLMChainFilterCompressor" {
+        repeat
+          :Control und Dokument in Prompt injizieren;
+          :Prompt an LLM übermitteln;
+          :LLM bewertet Relevanz;
+          if (Relevant?) then (True)
+              :Dokument übernehmen;
+            else (False)
+              :Dokument exkludieren;
+            endif
+          :Dokument Liste hinzufügen;
+        repeat while (Weiteres Dokument?) is (ja) not (nein);
+    }
+    :State erweitern;
+
+    note left
+    + docs: list[Document]
+    end note
+
+    repeat while (Weitere Controls?) is (ja) not (nein);
+   
+
+}
+
+
+partition "Audit-Service" {
+    repeat
+        :Control + Dokumente in Prompt injizieren;
+        :Prompt an LLM übermitteln;
+        :LLM führt Audit durch;
+        :Ergebnisse empfangen;
+        :State erweitern;
+          note left
+          + audit_result: AIMessage
+          end note
+    repeat while (Weitere Control?) is (ja) not (nein);
+ 
+}
+
+
+
+stop
+@enduml

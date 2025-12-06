@@ -3,7 +3,6 @@ import traceback
 from typing import Any
 
 from langchain_community.vectorstores.utils import filter_complex_metadata
-from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import END, START, StateGraph
@@ -66,7 +65,7 @@ async def extract_metadata(
 async def extract_text(
     state: OverallIndexState,
     config: RunnableConfig,
-) -> dict[str, list[TextSegment | LLMException]]:
+) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -147,7 +146,7 @@ async def extract_text(
 async def extract_imgs(
     state: OverallIndexState,
     config: RunnableConfig,
-) -> dict[str, list[ImageSegment | LLMException]]:
+) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -215,7 +214,7 @@ async def extract_imgs(
 async def extract_tables(
     state: OverallIndexState,
     config: RunnableConfig,
-) -> dict[str, list[TextSegment | LLMException]]:
+) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -290,7 +289,7 @@ async def extract_tables(
 
 async def save(
     state: OverallIndexState, config: RunnableConfig
-) -> dict[str, list[Document]]:
+) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
 

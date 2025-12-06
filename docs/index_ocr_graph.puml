@@ -1,0 +1,148 @@
+@startuml
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam arrowColor black
+skinparam activityBackgroundColor lightgrey
+skinparam activityBorderColor black
+skinparam activityDiamondBackgroundColor white
+
+start
+
+:State & Config übermitteln;
+
+    note left
+        State:
+        - pdf path
+
+        Config:
+        - doc_id
+        - collection_id
+        - embedding_model
+        - mode 
+
+        - gen_text_metadata_model
+        - gen_text_metadata_prompt
+        - splitter_seperators
+        - splitter_chunk_size
+
+        - gen_img_metadata_model
+        - gen_img_metadata_prompt
+
+        - gen_table_metadata_model
+        - gen_table_metadata_prompt
+
+    end note
+
+partition "extract_metadata" {
+
+  :Load pdf metadata;
+    note left
+        PyMuPDF
+        - fitz
+    end note
+
+  :Add additional metadata;
+    note left
+        doc_id
+        collection_id
+        embedding_model
+        gen_text_metadata_model
+        gen_img_metadata_model
+        gen_table_metadata_model
+    end note
+
+  :Add doc metadata to state;
+
+}
+
+switch (Mode)
+  case (text / all)
+    partition "extract_text" {
+
+      :Load text from every pdf page -> List[PDFText];
+        note left
+            PyMuPDF
+            - fitz
+        end note
+
+      :Split text recursive;
+      :Genearte  text segments with llm for each pdf page img 
+      -> list[LLMTextSegment | Exception];
+
+      repeat
+
+        :Map LLM-Response to text segments;
+            note left
+                text_segments: list[TextSegment] 
+                llm_exceptions: list[LLMException] 
+            end note
+
+      repeat while (Further LLM response?) is (Yes) not (No)
+
+      :Add text segments and excpetions to state;
+
+    }
+
+  case (images / all)
+    partition "extract_imgs" {
+
+      :Load imgs from every pdf page -> List[PDFImage];
+        note left
+            PyMuPDF
+            - fitz
+        end note
+
+      :Genearte  img segment with llm for each img
+      -> list[LLMImageSegment | Exception];
+
+      repeat
+        :Map LLM-Response to img segments or exception;
+            note left
+            img_segments: list[ImageSegment] 
+            llm_exceptions: list[LLMException] 
+            end note
+
+      repeat while (Further LLM response?) is (Yes) not (No)
+
+      :Add img segments and excpetions to state;
+
+    }
+
+  case (tables / all)
+    partition "extract_tables" {
+
+      :Load tables from every pdf page -> list[PDFTable];
+        note left
+            Unstructured:
+            - detectron2_onnx (layout)
+            - tesseract (ocr)
+        end note
+
+      :Genearte  image segments with llm for each img 
+      -> list[LLMTableSegment | Exception];
+
+      repeat
+        :Map LLM-Response to rable segments or exception;
+        note left
+            table_segments: list[LLMTableSegment] 
+            llm_exceptions: list[LLMException] 
+        end note
+
+      repeat while (Further LLM response?) is (Yes) not (No)
+      :Add table segments and excpetions to state;
+
+    }
+endswitch
+
+partition "save" {
+   
+:Build vstore;
+:Map segments to LangChain Doc -> list[Document];
+:Filter complex metadata;
+:Add docs to vstore;
+:Add docs to state;
+        
+}
+
+stop
+@enduml
