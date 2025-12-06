@@ -66,7 +66,7 @@ async def extract_metadata(
 async def extract_text(
     state: OverallIndexState,
     config: RunnableConfig,
-) -> dict[str, list[TextSegment]]:
+) -> dict[str, list[TextSegment | LLMException]]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -92,27 +92,27 @@ async def extract_text(
             chunks.append(chunk)
             pages.append(pdf_text.page_number)
 
-    llm_text_responses = await gen_llm_structured_data_from_texts(
+    llm_responses = await gen_llm_structured_data_from_texts(
         chunks,
         build_chat_model(gen_metadata_model),
         gen_metadata_prompt,
         LLMTextSegment,
     )
 
-    document_segments = []
+    document_segments: list[TextSegment] = []
     text_exceptions: list[LLMException] = []
-    for chunk_index, (chunk, chunk_page, llm_text_segment) in enumerate(
-        zip(chunks, pages, llm_text_responses, strict=True)
+    for chunk_index, (chunk, chunk_page, llm_response) in enumerate(
+        zip(chunks, pages, llm_responses, strict=True)
     ):
-        if isinstance(llm_text_segment, Exception):
+        if isinstance(llm_response, Exception):
             text_exceptions.append(
                 LLMException(
                     page_number=chunk_page,
                     chunk_type="Text",
                     chunk_index=chunk_index,
-                    message=str(llm_text_segment),
+                    message=str(llm_response),
                     traceback="".join(
-                        traceback.format_exception(llm_text_segment)
+                        traceback.format_exception(llm_response)
                     ),
                 )
             )
@@ -134,7 +134,7 @@ async def extract_text(
                 "chunk_index": chunk_index,
                 "chunk_id": chunk_id,
             },
-            llm_text_segment=llm_text_segment,
+            llm_text_segment=llm_response,
         )
         document_segments.append(text_segment)
 
@@ -147,7 +147,7 @@ async def extract_text(
 async def extract_imgs(
     state: OverallIndexState,
     config: RunnableConfig,
-) -> dict[str, list[ImageSegment]]:
+) -> dict[str, list[ImageSegment | LLMException]]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -159,27 +159,27 @@ async def extract_imgs(
     pdf_imgs = load_imgs_from_pdf(state.path)
 
     img_urls = [img.image_url for img in pdf_imgs]
-    llm_img_responses = await gen_llm_structured_data_from_imgs(
+    llm_responses = await gen_llm_structured_data_from_imgs(
         img_urls,
         build_chat_model(gen_metadata_model),
         gen_metadata_prompt,
         LLMImageSegment,
     )
 
-    document_segments = []
+    document_segments: list[ImageSegment] = []
     image_exceptions: list[LLMException] = []
-    for chunk_index, (img, img_url, llm_img_segment) in enumerate(
-        zip(pdf_imgs, img_urls, llm_img_responses, strict=True)
+    for chunk_index, (img, img_url, llm_response) in enumerate(
+        zip(pdf_imgs, img_urls, llm_responses, strict=True)
     ):
-        if isinstance(llm_img_segment, Exception):
+        if isinstance(llm_response, Exception):
             image_exceptions.append(
                 LLMException(
                     page_number=img.page_number,
                     chunk_type="Image",
                     chunk_index=chunk_index,
-                    message=str(llm_img_segment),
+                    message=str(llm_response),
                     traceback="".join(
-                        traceback.format_exception(llm_img_segment)
+                        traceback.format_exception(llm_response)
                     ),
                 )
             )
@@ -202,7 +202,7 @@ async def extract_imgs(
                 "chunk_index": chunk_index,
                 "chunk_id": chunk_id,
             },
-            llm_image_segment=llm_img_segment,
+            llm_image_segment=llm_response,
         )
         document_segments.append(img_segment)
 
@@ -215,7 +215,7 @@ async def extract_imgs(
 async def extract_tables(
     state: OverallIndexState,
     config: RunnableConfig,
-) -> dict[str, list[TableSegment]]:
+) -> dict[str, list[TextSegment | LLMException]]:
 
     index_config = IndexConfig.from_runnable_config(config)
 
@@ -235,27 +235,27 @@ async def extract_tables(
         else:
             html_or_text_tables.append("table extraction failed")
 
-    llm_table_responses = await gen_llm_structured_data_from_texts(
+    llm_responses = await gen_llm_structured_data_from_texts(
         html_or_text_tables,
         build_chat_model(gen_metadata_model),
         gen_metadata_prompt,
         LLMTableSegment,
     )
 
-    document_segments = []
+    document_segments: list[TableSegment] = []
     table_exceptions: list[LLMException] = []
-    for chunk_index, (pdf_table, llm_table_segment) in enumerate(
-        zip(pdf_tables, llm_table_responses, strict=True)
+    for chunk_index, (pdf_table, llm_response) in enumerate(
+        zip(pdf_tables, llm_responses, strict=True)
     ):
-        if isinstance(llm_table_segment, Exception):
+        if isinstance(llm_response, Exception):
             table_exceptions.append(
                 LLMException(
                     page_number=pdf_table.page_number,
                     chunk_type="Table",
                     chunk_index=chunk_index,
-                    message=str(llm_table_segment),
+                    message=str(llm_response),
                     traceback="".join(
-                        traceback.format_exception(llm_table_segment)
+                        traceback.format_exception(llm_response)
                     ),
                 )
             )
@@ -278,7 +278,7 @@ async def extract_tables(
                 "chunk_index": chunk_index,
                 "chunk_id": chunk_id,
             },
-            llm_table_segment=llm_table_segment,
+            llm_table_segment=llm_response,
         )
         document_segments.append(table_segment)
 

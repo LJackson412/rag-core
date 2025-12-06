@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.prompts.prompts import EXTRACT_DATA_FROM_PDF_PROMPT
+from rag_app.index.llm.prompts import EXTRACT_DATA_FROM_PDF_PROMPT
 
 T = TypeVar("T", bound="IndexConfig")
 

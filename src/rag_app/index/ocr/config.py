@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.prompts.prompts import (
+from rag_app.index.ocr.prompts import (
     GEN_IMG_METADATA_PROMPT,
     GEN_TABLE_METADATA_PROMPT,
     GEN_TEXT_METADATA_PROMPT,
