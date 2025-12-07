@@ -90,8 +90,8 @@ async def llm_extract(
             llm_exceptions.append(
                 LLMException(
                     page_number=pdf_page_img.page_number,
-                    chunk_type="LLMException",
-                    chunk_index=chunk_index,
+                    chunk_type=None,
+                    chunk_index=None,
                     message=str(llm_response),
                     traceback="".join(traceback.format_exception(llm_response)),
                 )
@@ -108,6 +108,7 @@ async def llm_extract(
             )
             text_segments.append(
                 TextSegment(
+                    extracted_content=text_segment.extracted_content,
                     metadata={
                         **state.document_metadata,
                         "chunk_type": "Text",
@@ -129,6 +130,7 @@ async def llm_extract(
             )
             image_segments.append(
                 ImageSegment(
+                    extracted_content=image_segment.extracted_content,
                     metadata={
                         **state.document_metadata,
                         "chunk_type": "Image",
@@ -150,6 +152,7 @@ async def llm_extract(
             )
             table_segments.append(
                 TableOrListSegment(
+                    extracted_content=image_segment.extracted_content,
                     metadata={
                         **state.document_metadata,
                         "chunk_type": "Table",
@@ -171,6 +174,7 @@ async def llm_extract(
             )
             code_or_formula_segments.append(
                 CodeOrFormulaSegment(
+                    extracted_content=code_or_formula.extracted_content,
                     metadata={
                         **state.document_metadata,
                         "chunk_type": "CodeOrFormula",
@@ -192,6 +196,7 @@ async def llm_extract(
             )
             other_segments.append(
                 OtherSegment(
+                    extracted_content=other_segment.extracted_content,
                     metadata={
                         **state.document_metadata,
                         "chunk_type": "Other",

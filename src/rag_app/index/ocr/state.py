@@ -13,8 +13,7 @@ class InputIndexState(BaseModel):
         str,
         Field(
             description=(
-                "Absolute or repo-relative filesystem path to the PDF that should be indexed. "
-                "The path is used by the extractor node to read the document before creating RAG chunks."
+                "Path to the PDF that should be indexed"
             ),
         ),
     ]
@@ -26,8 +25,7 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
-                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+                ""
             ),
         ),
     ]
@@ -36,19 +34,16 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
-                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+               ""
             ),
         ),
     ]
     image_segments: Annotated[
         list[ImageSegment],
-        add,  # <- Reducer: alte Liste + neue Liste
         Field(
             default_factory=list,
             description=(
-                "Structured extraction output per PDF page returned by the extract node. Each entry contains the "
-                "raw content, retrieval summaries, and metadata needed to build vector-store documents."
+                ""
             ),
         ),
     ]
@@ -81,7 +76,7 @@ class OverallIndexState(InputIndexState, OutputIndexState):
         dict[str, Any],
         Field(
             default_factory=dict,
-            description=("every page one text"),
+            description=(""),
         ),
     ]
  

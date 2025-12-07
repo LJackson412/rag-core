@@ -43,11 +43,14 @@ async def extract_metadata(
 ) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
-
-    gen_metadata_model = index_config.gen_metadata_model
-    embedding_model = index_config.embedding_model
-    doc_id = index_config.doc_id
+    
     collection_id = index_config.collection_id
+    doc_id = index_config.doc_id
+    gen_text_metadata_model = index_config.gen_text_metadata_model
+    gen_img_metadata_model = index_config.gen_img_metadata_model
+    gen_table_metadata_model = index_config.gen_table_metadata_model
+    embedding_model = index_config.embedding_model
+  
 
     base_metadata = load_pdf_metadata(state.path)
 
@@ -56,7 +59,9 @@ async def extract_metadata(
         "doc_id": doc_id,
         "collection_id": collection_id,
         "embedding_model": embedding_model,
-        "gen_metadata_model": gen_metadata_model,
+        "gen_text_metadata_model": gen_text_metadata_model,
+        "gen_img_metadata_model": gen_img_metadata_model,
+        "gen_table_metadata_model": gen_table_metadata_model
     }
 
     return {"document_metadata": metadata}
@@ -69,13 +74,13 @@ async def extract_text(
 
     index_config = IndexConfig.from_runnable_config(config)
 
+    collection_id = index_config.collection_id
+    doc_id = index_config.doc_id
+    gen_metadata_model = index_config.gen_text_metadata_model
     gen_metadata_prompt = index_config.gen_text_metadata_prompt
-    gen_metadata_model = index_config.gen_metadata_model
     separators = index_config.splitter_seperators
     chunk_size = index_config.splitter_chunk_size
 
-    doc_id = index_config.doc_id
-    collection_id = index_config.collection_id
 
     pdf_texts = load_texts_from_pdf(state.path)
 
@@ -150,10 +155,10 @@ async def extract_imgs(
 
     index_config = IndexConfig.from_runnable_config(config)
 
-    gen_metadata_prompt = index_config.gen_img_metadata_prompt
-    gen_metadata_model = index_config.gen_metadata_model
-    doc_id = index_config.doc_id
     collection_id = index_config.collection_id
+    doc_id = index_config.doc_id
+    gen_metadata_model = index_config.gen_img_metadata_model
+    gen_metadata_prompt = index_config.gen_img_metadata_prompt
 
     pdf_imgs = load_imgs_from_pdf(state.path)
 
@@ -218,11 +223,11 @@ async def extract_tables(
 
     index_config = IndexConfig.from_runnable_config(config)
 
-    gen_metadata_prompt = index_config.gen_table_metadata_prompt
-    gen_metadata_model = index_config.gen_metadata_model
-    doc_id = index_config.doc_id
     collection_id = index_config.collection_id
-
+    doc_id = index_config.doc_id
+    gen_metadata_model = index_config.gen_table_metadata_prompt
+    gen_metadata_prompt = index_config.gen_table_metadata_prompt
+ 
     pdf_tables = await asyncio.to_thread(load_tables_from_pdf, state.path)
 
     html_or_text_tables = []
