@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from rag_app.index.schema import BaseLLMSegmentAttributes
+from rag_app.index.schema import BaseLLMSegmentAttributes, BaseSegmentAttributes
 
+# NOTE: LLM-Segements are used as Prompt for the LLM.
+# They are transferred to the LLM via structured output. 
 
 class LLMTextSegment(BaseLLMSegmentAttributes):
     extracted_content: Annotated[
@@ -46,7 +48,6 @@ class LLMImageSegment(BaseLLMSegmentAttributes):
             ),
         ),
     ]
-
     category: Annotated[
         str,
         Field(
@@ -76,7 +77,6 @@ class LLMTableOrListSegment(BaseLLMSegmentAttributes):
             ),
         ),
     ]
-
     category: Annotated[
         str,
         Field(
@@ -137,18 +137,14 @@ class LLMOtherSegment(BaseLLMSegmentAttributes):
         ),
     ]
 
-# Used as strcutured Output Prompt for the LLM to generate Segements,
-# from one Image, can be one pdf page 
+
 class LLMSegments(BaseModel):
     texts: Annotated[
         list[LLMTextSegment],
         Field(
             default_factory=list,
             description=(
-                "List of semantically coherent document sections "
-                "(e.g. heading plus associated paragraph, individual paragraphs, captions, lists). "
-                "Split the content so that each entry is a meaningful RAG chunk "
-                "for question-answering systems."
+                "List of semantically coherent document text sections"
             ),
         ),
     ]
@@ -164,7 +160,7 @@ class LLMSegments(BaseModel):
         Field(
             default_factory=list,
             description=(
-                "List of detected tables and lists with a structured HTML representation."
+                "List of detected tables and lists"
             ),
         ),
     ]
@@ -184,32 +180,12 @@ class LLMSegments(BaseModel):
             default_factory=list,
             description=(
                 "List of all content that cannot be clearly assigned to text, table/list, "
-                "figure, or code/formula, but is still relevant for understanding the document."
+                "figure, or code/formula"
             ),
         ),
     ]
 
-
-class Segments(LLMSegments):
-    metadata: Annotated[
-        dict[str, Any],
-        Field(
-            default_factory=dict,
-            description="Additional metadata such as source, page number or PDF information.",
-        ),
-    ]
-
-
 # -------------------------------------------------------------------------------
-
-class BaseSegmentAttributes(BaseModel):
-    metadata: Annotated[
-        dict[str, Any],
-        Field(
-            default_factory=dict,
-            description="",
-        ),
-    ]
 
 
 class TextSegment(BaseSegmentAttributes):
@@ -225,7 +201,7 @@ class ImageSegment(BaseSegmentAttributes):
     llm_image_segment: Annotated[
         LLMImageSegment,
         Field(
-            description=("List of detected figures and graphical elements"),
+            description=(""),
         ),
     ]
 
@@ -235,7 +211,7 @@ class TableOrListSegment(BaseSegmentAttributes):
         LLMTableOrListSegment,
         Field(
             description=(
-                "List of detected tables and lists with a structured HTML representation."
+                ""
             ),
         ),
     ]
@@ -246,8 +222,7 @@ class CodeOrFormulaSegment(BaseSegmentAttributes):
         LLMCodeOrFormulaSegment,
         Field(
             description=(
-                "List of detected code blocks and formulas (programming code, pseudocode, "
-                "mathematical and other formulas)."
+                ""
             ),
         ),
     ]
@@ -258,8 +233,7 @@ class OtherSegment(BaseSegmentAttributes):
         LLMOtherSegment,
         Field(
             description=(
-                "List of content that cannot be clearly assigned to text, table/list, figure, "
-                "or code/formula, but is still relevant for understanding the document."
+                ""
             ),
         ),
     ]

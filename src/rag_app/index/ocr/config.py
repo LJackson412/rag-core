@@ -17,23 +17,21 @@ T = TypeVar("T", bound="IndexConfig")
 class IndexConfig(BaseModel):
     """Configurable Indexing Mode for RAG Index Graph."""
 
-    doc_id: Annotated[
+    collection_id: Annotated[
         str,
         Field(
-            description="document id for searching within a specific document",
+            description=(
+                "A collection is a container of documents in the VStore"
+            ),
             json_schema_extra={
                 "langgraph_nodes": ["save"],
             },
         ),
     ]
-    collection_id: Annotated[
+    doc_id: Annotated[
         str,
         Field(
-            description=(
-                "ID of the collection to search within. "
-                "A collection is a container of documents in the Chroma VStore. "
-                "The value of collection_id must follow the required Chroma format."
-            ),
+            description="The document ID is used to identify a document when it is retrieved",
             json_schema_extra={
                 "langgraph_nodes": ["save"],
             },
@@ -42,9 +40,9 @@ class IndexConfig(BaseModel):
     embedding_model: Annotated[
         Literal["text-embedding-3-small", "text-embedding-3-large"],
         Field(
-            default="text-embedding-3-small",
+            default="text-embedding-3-large",
             description=(
-                "OpenAI embedding model used for Chroma indexing. "
+                "Embedding model used for indexing "
                 "Use 'text-embedding-3-large' when you need maximum retrieval quality."
                 "Use the same embedding model for Retrieval"
             ),
@@ -57,35 +55,28 @@ class IndexConfig(BaseModel):
         Literal["text", "images", "tables", "all"],
         Field(
             default="all",
-            description=(""),
-        ),
-    ]
-    gen_metadata_model: Annotated[
-        Literal["gpt-4o", "gpt-4o-mini"],
-        Field(
-            default="gpt-4o-mini",
-            description=("Multimodal model for PDF extraction. "),
-            json_schema_extra={
-                "langgraph_nodes": ["extract"],
-            },
+            description=("The mode allows you to decide which types of content elements are indexed. "),
         ),
     ]
     # ------------------------------------------------------------------------
     
-    # extract text config:
     gen_text_metadata_model: Annotated[
-        Literal["gpt-4o", "gpt-4o-mini"],
+        Literal["gpt-4.1", "gpt-4.1-mini"],
         Field(
-            default="gpt-4o-mini",
-            description=("Multimodal model for PDF extraction. "),
+            default="gpt-4.1",
+             description=(
+                "Multimodal model for img enrichment"
+                "Generates metadata for better retrieval quality"
+                "As an example, a retrieval_summary is formed, which is used to retrieve this segment"
+            ),
             json_schema_extra={
-                "langgraph_nodes": ["extract"],
+                "langgraph_nodes": ["extract_text"],
             },
         ),
     ]
     gen_text_metadata_prompt: str = Field(
         default=GEN_TEXT_METADATA_PROMPT,
-        description="The system prompt used for generating responses.",
+        description="System prompt for generating metadata",
         json_schema_extra={
             "langgraph_nodes": ["extract_text"],
             "langgraph_type": "prompt",
@@ -93,30 +84,34 @@ class IndexConfig(BaseModel):
     )
     splitter_seperators: list[str] = Field(
         default=["\n\n", "\n", " ", ""],
-        description="",
+        description="Sepearatos for recursive text splitting",
         json_schema_extra={"langgraph_nodes": ["extract_text"]},
     )
     splitter_chunk_size: int = Field(
         default=900,
-        description="",
+        description="Chunk Size for recursive text splitting",
         json_schema_extra={"langgraph_nodes": ["extract_text"]},
     )
     # ------------------------------------------------------------------------
 
-    # extract img config:
+
     gen_img_metadata_model: Annotated[
         Literal["gpt-4o", "gpt-4o-mini"],
         Field(
-            default="gpt-4o-mini",
-            description=("Multimodal model for PDF extraction. "),
+            default="gpt-4o",
+            description=(
+                "Multimodal model for img enrichment"
+                "Generates metadata for better retrieval quality"
+                "As an example, a retrieval_summary is formed, which is used to retrieve this segment"
+            ),
             json_schema_extra={
-                "langgraph_nodes": ["extract"],
+                "langgraph_nodes": ["extract_imgs"],
             },
         ),
     ]
     gen_img_metadata_prompt: str = Field(
         default=GEN_IMG_METADATA_PROMPT,
-        description="The system prompt used for generating responses.",
+        description="System prompt for generating metadata",
         json_schema_extra={
             "langgraph_nodes": ["extract_imgs"],
             "langgraph_type": "prompt",
@@ -124,12 +119,15 @@ class IndexConfig(BaseModel):
     )
     # ------------------------------------------------------------------------
     
-    # extract table config:
     gen_table_metadata_model: Annotated[
         Literal["gpt-4o", "gpt-4o-mini"],
         Field(
             default="gpt-4o-mini",
-            description=("Multimodal model for PDF extraction. "),
+            description=(
+                "Multimodal model for table enrichment"
+                "Generates metadata for better retrieval quality"
+                "As an example, a retrieval_summary is formed, which is used to retrieve this segment"
+            ),
             json_schema_extra={
                 "langgraph_nodes": ["extract"],
             },
@@ -137,7 +135,7 @@ class IndexConfig(BaseModel):
     ]
     gen_table_metadata_prompt: str = Field(
         default=GEN_TABLE_METADATA_PROMPT,
-        description="The system prompt used for generating responses.",
+        description="System prompt for generating metadata",
         json_schema_extra={
             "langgraph_nodes": ["extract_tables"],
             "langgraph_type": "prompt",

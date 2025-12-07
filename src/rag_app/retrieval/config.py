@@ -17,30 +17,28 @@ T = TypeVar("T", bound="RetrievalConfig")
 class RetrievalConfig(BaseModel):
     """Configurable Indexing Mode for RAG Index Graph."""
 
-    doc_id: Annotated[
-        str,
-        Field(
-            default="DB_ZB25",
-            description="document id for searching within a specific document",
-            json_schema_extra={
-                "langgraph_nodes": ["retrieve"],
-            },
-        ),
-    ]
     collection_id: Annotated[
         str,
         Field(
-            default="DB_ZB",
+            default="",
             description=(
-                "collection id for searching within a specific collection"
-                "collection is a collection of documents. "
+                "By specifying a collection, all documents in the container will be queried"
             ),
             json_schema_extra={
                 "langgraph_nodes": ["retrieve"],
             },
         ),
     ]
-
+    doc_id: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="If no document ID is specified, the entire collection is queried.",
+            json_schema_extra={
+                "langgraph_nodes": ["retrieve"],
+            },
+        ),
+    ]
     generate_questions_model: Annotated[
         Literal["gpt-4.1", "gpt-4.1-mini"],
         Field(
@@ -56,7 +54,12 @@ class RetrievalConfig(BaseModel):
     ]
     generate_questions_prompt: str = Field(
         default=GENERATE_QUESTIONS_PROMPT,
-        description="The prompt used to generate semantic search question variants.",
+        description=(
+            "The prompt used to generate semantic search query variants."
+            "The default prompt is designed for the multi-query technique."
+            "If you change the prompt, you can use different techniques:"
+            "such as sub-query, query rewriting, HyDE, step-back."
+        ),
         json_schema_extra={
             "langgraph_nodes": ["generate_questions"],
             "langgraph_type": "prompt",
@@ -79,10 +82,11 @@ class RetrievalConfig(BaseModel):
     embedding_model: Annotated[
         Literal["text-embedding-3-small", "text-embedding-3-large"],
         Field(
-            default="text-embedding-3-small",
+            default="text-embedding-3-large",
             description=(
-                "OpenAI embedding model used for Chroma retrieval. "
-                "Use 'text-embedding-3-large' for maximum quality at higher cost."
+                "Embedding model used for indexing "
+                "Use 'text-embedding-3-large' when you need maximum retrieval quality"
+                "Use the same embedding model that was used to index the collection/document"
             ),
             json_schema_extra={
                 "langgraph_nodes": ["retrieve"],
@@ -112,7 +116,7 @@ class RetrievalConfig(BaseModel):
         Field(
             default="gpt-4.1",
             description=(
-                "Model for classifying document chunk relevance. "
+                "2-Stage of Retrieval: Compression Model for classifying document chunk relevance. "
                 "Use 'gpt-4.1' for subtle relevance; 'gpt-4.1-mini' for unified mini usage."
             ),
             json_schema_extra={

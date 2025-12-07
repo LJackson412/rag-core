@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from rag_app.index.schema import BaseLLMSegmentAttributes
+from rag_app.index.schema import BaseLLMSegmentAttributes, BaseSegmentAttributes
 
 
 class LLMTextSegment(BaseLLMSegmentAttributes):
@@ -47,22 +47,6 @@ class LLMTableSegment(BaseLLMSegmentAttributes):
     ]
 
 # -------------------------------------------------------------------------------
-
-class BaseSegmentAttributes(BaseModel):
-    extracted_content: Annotated[
-        str,
-        Field(
-            description="",
-        ),
-    ]
-    metadata: Annotated[
-        dict[str, Any],
-        Field(
-            default_factory=dict,
-            description="",
-        ),
-    ]
-
 
 class TextSegment(BaseSegmentAttributes):
     llm_text_segment: Annotated[

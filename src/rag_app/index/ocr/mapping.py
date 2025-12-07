@@ -4,11 +4,11 @@ from typing import Any
 from langchain_core.documents import Document
 
 from rag_app.index.ocr.schema import (
-    BaseSegmentAttributes,
     ImageSegment,
     TableSegment,
     TextSegment,
 )
+from rag_app.index.schema import BaseSegmentAttributes
 
 
 def map_to_docs(data: Sequence[BaseSegmentAttributes]) -> list[Document]:
