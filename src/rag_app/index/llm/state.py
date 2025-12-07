@@ -32,8 +32,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
-
+                "Segments of text produced by the structured extraction model, including the "
+                "LLM-assigned categories and positional data."
             ),
         ),
     ]
@@ -42,7 +42,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "Image or figure regions extracted by the LLM with associated labels and "
+                "layout coordinates."
             ),
         ),
     ]
@@ -51,7 +52,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "LLM-generated representations of tables and lists, including HTML content "
+                "and bounding boxes for downstream processing."
             ),
         ),
     ]
@@ -60,7 +62,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "Code blocks or mathematical expressions identified by the LLM with their "
+                "locations in the source document."
             ),
         ),
     ]
@@ -69,7 +72,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "Miscellaneous content segments (e.g., separators or unclassified snippets) "
+                "captured to avoid data loss during indexing."
             ),
         ),
     ]
@@ -78,7 +82,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "LangChain Document instances built from the extracted segments that are "
+                "saved to the vector store for retrieval."
             ),
         ),
     ]
@@ -102,7 +107,10 @@ class OverallIndexState(InputIndexState, OutputIndexState):
         dict[str, Any],
         Field(
             default_factory=dict,
-            description=(""),
+            description=(
+                "Metadata about the indexed document (e.g., title, source path, page count, "
+                "and ingestion timestamps) propagated through the graph."
+            ),
         ),
     ]
     

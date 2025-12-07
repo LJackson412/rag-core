@@ -25,7 +25,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "Text segments extracted from the document, including bounding boxes, page "
+                "numbers, and the LLM-provided text classification metadata."
             ),
         ),
     ]
@@ -34,7 +35,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-               ""
+                "Structured table or list segments, each with HTML content and positional "
+                "information for later chunking and storage."
             ),
         ),
     ]
@@ -43,7 +45,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                ""
+                "Image-based segments (figures and graphics) with spatial metadata that can "
+                "be re-rendered or summarized downstream."
             ),
         ),
     ]
@@ -76,7 +79,10 @@ class OverallIndexState(InputIndexState, OutputIndexState):
         dict[str, Any],
         Field(
             default_factory=dict,
-            description=(""),
+            description=(
+                "Metadata about the indexed document (e.g., title, source path, page count, "
+                "and ingestion timestamps) propagated through the graph."
+            ),
         ),
     ]
  
