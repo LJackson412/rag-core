@@ -4,12 +4,10 @@ skinparam shadowing false
 skinparam arrowColor black
 skinparam activityBackgroundColor lightgrey
 skinparam activityBorderColor black
-skinparam activityDiamondBackgroundColor white
 
 start
 
-:State & Config übermitteln;
-
+:Transfer State & Config;
     note left
         State:
         - pdf path
@@ -17,122 +15,55 @@ start
         Config:
         - doc_id
         - collection_id
+        - extract_model
+        - extract_data_prompt
         - embedding_model
-        - mode 
-
-        - gen_text_metadata_model
-        - gen_text_metadata_prompt
-        - splitter_seperators
-        - splitter_chunk_size
-
-        - gen_img_metadata_model
-        - gen_img_metadata_prompt
-
-        - gen_table_metadata_model
-        - gen_table_metadata_prompt
-
     end note
 
 partition "extract_metadata" {
-
-  :Load pdf metadata;
+   
+:Load pdf metadata;
     note left
         PyMuPDF
         - fitz
     end note
-
-  :Add additional metadata;
+:Add additional metadata;
     note left
         doc_id
         collection_id
         embedding_model
-        gen_text_metadata_model
-        gen_img_metadata_model
-        gen_table_metadata_model
+        extract_model
     end note
-
-  :Add doc metadata to state;
-
+:Add doc metadata to state;
+       
 }
 
-switch (Mode)
-  case (text / all)
-    partition "extract_text" {
 
-      :Load text from every pdf page -> List[PDFText];
-        note left
-            PyMuPDF
-            - fitz
-        end note
+partition "llm_extract" {
+   
+:Load every pdf page as img -> list[PDFImage];
+    note left
+        pdf2image
+    end note
+:Genearte  text segments with llm for each pdf page img -> list[LLMSegment | Exception];
 
-      :Split text recursive;
-      :Genearte  text segments with llm for each pdf page img 
-      -> list[LLMTextSegment | Exception];
+repeat 
 
-      repeat
+:Map LLMSegment to segments and llm_exception;
+    note left
+        text_segments: list[TextSegment] 
+        image_segments: list[ImageSegment]
+        table_segments: list[TableOrListSegment] 
+        code_or_formula_segments: list[CodeOrFormulaSegment] 
+        other_segments: list[OtherSegment]
+        llm_exceptions: list[LLMException] 
+    end note
 
-        :Map LLM-Response to text segments or exception;
-            note left
-                text_segments: list[TextSegment] 
-                llm_exceptions: list[LLMException] 
-            end note
+repeat while (Further LLM response?) is (Yes) not (No)
 
-      repeat while (Further LLM response?) is (Yes) not (No)
+:Add segments to state;
 
-      :Add text segments and excpetions to state;
-
-    }
-
-  case (images / all)
-    partition "extract_imgs" {
-
-      :Load imgs from every pdf page -> List[PDFImage];
-        note left
-            PyMuPDF
-            - fitz
-        end note
-
-      :Genearte  img segment with llm for each img
-      -> list[LLMImageSegment | Exception];
-
-      repeat
-        :Map LLM-Response to img segments or exception;
-            note left
-            img_segments: list[ImageSegment] 
-            llm_exceptions: list[LLMException] 
-            end note
-
-      repeat while (Further LLM response?) is (Yes) not (No)
-
-      :Add img segments and excpetions to state;
-
-    }
-
-  case (tables / all)
-    partition "extract_tables" {
-
-      :Load tables from every pdf page -> list[PDFTable];
-        note left
-            Unstructured:
-            - detectron2_onnx (layout)
-            - tesseract (ocr)
-        end note
-
-      :Genearte  image segments with llm for each img 
-      -> list[LLMTableSegment | Exception];
-
-      repeat
-        :Map LLM-Response to rable segments or exception;
-        note left
-            table_segments: list[LLMTableSegment] 
-            llm_exceptions: list[LLMException] 
-        end note
-
-      repeat while (Further LLM response?) is (Yes) not (No)
-      :Add table segments and excpetions to state;
-
-    }
-endswitch
+}
 
 partition "save" {
    
@@ -143,6 +74,7 @@ partition "save" {
 :Add docs to state;
         
 }
+
 
 stop
 @enduml

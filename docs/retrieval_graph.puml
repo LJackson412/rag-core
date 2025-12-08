@@ -7,12 +7,28 @@ skinparam activityBorderColor black
 
 start
 
-:State & Config übermitteln;
+:Transfer State & Config;
+    note left
+        State:
+        - pdf path
 
-note left
-+ element_id: str
-+ controls: list[str]
-end note
+        Config:
+        - collection_id
+        - doc_id
+
+        - embedding_model
+        - generate_questions_prompt
+        - generate_questions_model
+        - number_of_llm_generated_questions
+        - number_of_docs_to_retrieve
+        - include_original_question
+
+        - compress_docs_model
+        - compress_docs_prompt
+
+        - generate_answer_model
+        - generate_answer_prompt
+    end note
 
 
 partition "Retrieval-Service" {

@@ -7,7 +7,8 @@ skinparam activityBorderColor black
 
 start
 
-:State & Config übermitteln;
+
+:Transfer State & Config;
     note left
         State:
         - pdf path
