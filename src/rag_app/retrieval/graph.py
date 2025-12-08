@@ -101,7 +101,7 @@ async def compress_docs(
 ) -> dict[str, list[Document]]:
     retrieval_config = RetrievalConfig.from_runnable_config(config)
     compress_docs_model = retrieval_config.compress_docs_model
-    compress_docs_prompt: str = retrieval_config.compress_docs_prompt  # dein String
+    compress_docs_prompt: str = retrieval_config.compress_docs_prompt  
     user_question = state.messages[-1].content
 
     structured_llm = build_chat_model(compress_docs_model).with_structured_output(
@@ -162,7 +162,7 @@ async def generate_answer(
     user_question = state.messages[-1].content
 
     strucuterd_llm = build_chat_model(generate_answer_model).with_structured_output(
-        LLMAnswer, include_raw=True
+        LLMAnswer
     )
 
     def _prepare_docs_for_prompt(docs: list[Document]) -> str:
@@ -196,10 +196,7 @@ async def generate_answer(
     )
     llm_input = HumanMessage(content=prompt)
 
-    result = await strucuterd_llm.ainvoke([llm_input])
-
-    ai_message = result["raw"]
-    llm_answer = cast(LLMAnswer, result["parsed"])
+    llm_answer  = cast(LLMAnswer, await strucuterd_llm.ainvoke([llm_input]))
 
     chunk_ids = llm_answer.chunk_ids
     llm_evidence_docs = [
@@ -208,8 +205,7 @@ async def generate_answer(
 
     return {
         "llm_answer": llm_answer,
-        "llm_evidence_docs": llm_evidence_docs,
-        "messages": [ai_message],
+        "llm_evidence_docs": llm_evidence_docs
     }
 
 
