@@ -60,7 +60,7 @@ async def retrieve_docs(
     user_question = cast(str, state.messages[-1].content)
 
     vstore = await asyncio.to_thread(build_vstore, embedding_model, collection_id)
-    
+
     search_kwargs: Dict[str, Any] = {"k": k}
 
     if doc_id is not None:
@@ -70,7 +70,6 @@ async def retrieve_docs(
         search_type="similarity",
         search_kwargs=search_kwargs,
     )
-  
 
     if include_original_question:
         queries = [user_question] + state.llm_questions
@@ -111,10 +110,12 @@ async def compress_docs(
 
     llm_inputs: list[LanguageModelInput] = []
     for doc in state.retrieved_docs:
-        
+
         extracted = doc.metadata.get("extracted_content", "N/A")
-        
-        if doc.metadata.get("chunk_type") == "ImageOCR": # Images from LLM-Indexer excluded, because LLM extract text from the image not base64
+
+        if (
+            doc.metadata.get("chunk_type") == "ImageOCR"
+        ):  # Images from LLM-Indexer excluded, because LLM extract text from the image not base64
             text_prompt = compress_docs_prompt.format(
                 question=user_question,
                 doc_content="Image",

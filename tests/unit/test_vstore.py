@@ -11,7 +11,7 @@ if __name__ == "__main__":
     config = RunnableConfig(
         configurable={"doc_id": "Cancom_240514", "collection_id": "Cancom_OCR"}
     )
-    
+
     # config = RunnableConfig(
     #     configurable={"doc_id": "Cancom_240514", "collection_id": "Cancom_LLM"}
     # )
@@ -19,7 +19,6 @@ if __name__ == "__main__":
     index_config = RetrievalConfig.from_runnable_config(config)
 
     vstore = build_vstore(index_config.embedding_model, index_config.collection_id)
-
 
     k = vstore._collection.count()
 

@@ -46,7 +46,9 @@ class LLMTableSegment(BaseLLMSegmentAttributes):
         ),
     ]
 
+
 # -------------------------------------------------------------------------------
+
 
 class TextSegment(BaseSegmentAttributes):
     llm_text_segment: Annotated[

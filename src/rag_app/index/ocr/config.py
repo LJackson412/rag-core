@@ -16,9 +16,7 @@ class IndexConfig(BaseModel):
     collection_id: Annotated[
         str,
         Field(
-            description=(
-                "A collection is a container of documents in the VStore"
-            ),
+            description=("A collection is a container of documents in the VStore"),
             json_schema_extra={
                 "langgraph_nodes": ["save"],
             },
@@ -51,11 +49,13 @@ class IndexConfig(BaseModel):
         Literal["text", "images", "tables", "all"],
         Field(
             default="all",
-            description=("The mode allows you to decide which types of content elements are indexed. "),
+            description=(
+                "The mode allows you to decide which types of content elements are indexed. "
+            ),
         ),
     ]
     # ------------------------------------------------------------------------
-    
+
     gen_metadata_model: Annotated[
         Literal["gpt-4.1", "gpt-4.1-mini"],
         Field(

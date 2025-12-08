@@ -43,12 +43,11 @@ async def extract_metadata(
 ) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
-    
+
     collection_id = index_config.collection_id
     doc_id = index_config.doc_id
     gen_metadata_model = index_config.gen_metadata_model
     embedding_model = index_config.embedding_model
-  
 
     base_metadata = load_pdf_metadata(state.path)
 
@@ -76,7 +75,6 @@ async def extract_text(
     gen_metadata_prompt = index_config.gen_metadata_prompt
     separators = index_config.splitter_seperators
     chunk_size = index_config.splitter_chunk_size
-
 
     pdf_texts = load_texts_from_pdf(state.path)
 
@@ -111,9 +109,7 @@ async def extract_text(
                     chunk_type="Text",
                     chunk_index=chunk_index,
                     message=str(llm_response),
-                    traceback="".join(
-                        traceback.format_exception(llm_response)
-                    ),
+                    traceback="".join(traceback.format_exception(llm_response)),
                 )
             )
             continue
@@ -178,9 +174,7 @@ async def extract_imgs(
                     chunk_type="ImageOCR",
                     chunk_index=chunk_index,
                     message=str(llm_response),
-                    traceback="".join(
-                        traceback.format_exception(llm_response)
-                    ),
+                    traceback="".join(traceback.format_exception(llm_response)),
                 )
             )
             continue
@@ -223,7 +217,7 @@ async def extract_tables(
     doc_id = index_config.doc_id
     gen_metadata_model = index_config.gen_metadata_model
     gen_metadata_prompt = index_config.gen_metadata_prompt
- 
+
     pdf_tables = await asyncio.to_thread(load_tables_from_pdf, state.path)
 
     html_or_text_tables = []
@@ -254,9 +248,7 @@ async def extract_tables(
                     chunk_type="Table",
                     chunk_index=chunk_index,
                     message=str(llm_response),
-                    traceback="".join(
-                        traceback.format_exception(llm_response)
-                    ),
+                    traceback="".join(traceback.format_exception(llm_response)),
                 )
             )
             continue
@@ -288,9 +280,7 @@ async def extract_tables(
     }
 
 
-async def save(
-    state: OverallIndexState, config: RunnableConfig
-) -> dict[str, Any]:
+async def save(state: OverallIndexState, config: RunnableConfig) -> dict[str, Any]:
 
     index_config = IndexConfig.from_runnable_config(config)
 

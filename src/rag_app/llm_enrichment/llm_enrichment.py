@@ -22,8 +22,7 @@ def _build_llm_text_inputs(
 
 
 def _build_llm_img_inputs(
-    imgs_urls: Sequence[str],
-    prompt: str
+    imgs_urls: Sequence[str], prompt: str
 ) -> list[LanguageModelInput]:
     inputs: list[LanguageModelInput] = []
     for img_url in imgs_urls:
@@ -51,7 +50,7 @@ async def gen_llm_structured_data_from_imgs(
     imgs_urls: Sequence[str],
     llm: BaseChatModel,
     gen_prompt: str,
-    gen_data: Type[TModel]
+    gen_data: Type[TModel],
 ) -> list[TModel | Exception]:
 
     if not imgs_urls:
@@ -87,14 +86,10 @@ async def gen_llm_structured_data_from_imgs(
     return results
 
 
-
 async def gen_llm_structured_data_from_texts(
-    texts: Sequence[str],
-    llm: BaseChatModel,
-    gen_prompt: str,
-    gen_data: Type[TModel]
+    texts: Sequence[str], llm: BaseChatModel, gen_prompt: str, gen_data: Type[TModel]
 ) -> list[TModel | Exception]:
-    
+
     if not texts:
         return []
 

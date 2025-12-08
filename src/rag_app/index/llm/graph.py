@@ -58,23 +58,23 @@ async def llm_extract(
     state: OverallIndexState, config: RunnableConfig
 ) -> dict[str, Any]:
     index_config = IndexConfig.from_runnable_config(config)
-    
+
     extract_model = index_config.extract_model
     extract_prompt = index_config.extract_data_prompt
     doc_id = index_config.doc_id
     collection_id = index_config.collection_id
-    
+
     pdf_page_imgs = load_page_imgs_from_pdf(state.path)
-    
+
     img_urls = [img.image_url for img in pdf_page_imgs]
-    
+
     llm_responses = await gen_llm_structured_data_from_imgs(
         img_urls,
         build_chat_model(extract_model),
         extract_prompt,
         LLMSegments,
     )
-    
+
     text_segments: list[TextSegment] = []
     image_segments: list[ImageSegment] = []
     table_segments: list[TableOrListSegment] = []
@@ -83,9 +83,7 @@ async def llm_extract(
     llm_exceptions: list[LLMException] = []
 
     chunk_index = 0
-    for llm_response, pdf_page_img in zip(
-        llm_responses, pdf_page_imgs, strict=True
-    ):
+    for llm_response, pdf_page_img in zip(llm_responses, pdf_page_imgs, strict=True):
         if isinstance(llm_response, Exception):
             llm_exceptions.append(
                 LLMException(
@@ -97,8 +95,7 @@ async def llm_extract(
                 )
             )
             continue
-        
-        
+
         for text_segment in llm_response.texts:
             chunk_id = make_chunk_id(
                 chunk_type="Text",
@@ -208,8 +205,6 @@ async def llm_extract(
                 )
             )
             chunk_index += 1
-       
-            
 
     return {
         "text_segments": text_segments,
@@ -217,7 +212,7 @@ async def llm_extract(
         "table_segments": table_segments,
         "code_or_formula_segments": code_or_formula_segments,
         "other_segments": other_segments,
-        "llm_exceptions": llm_exceptions
+        "llm_exceptions": llm_exceptions,
     }
 
 

@@ -12,9 +12,7 @@ class InputIndexState(BaseModel):
     path: Annotated[
         str,
         Field(
-            description=(
-                "Path to the PDF that should be indexed"
-            ),
+            description=("Path to the PDF that should be indexed"),
         ),
     ]
 
@@ -24,27 +22,21 @@ class OutputIndexState(BaseModel):
         list[TextSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     table_segments: Annotated[
         list[TableSegment],
         Field(
             default_factory=list,
-            description=(
-               ""
-            ),
+            description=(""),
         ),
     ]
     image_segments: Annotated[
         list[ImageSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     index_docs: Annotated[
@@ -68,6 +60,7 @@ class OutputIndexState(BaseModel):
 
 class OverallIndexState(InputIndexState, OutputIndexState):
     """Combined input/output schema used as the shared state across the graph."""
+
     document_metadata: Annotated[
         dict[str, Any],
         Field(
@@ -75,4 +68,3 @@ class OverallIndexState(InputIndexState, OutputIndexState):
             description=(""),
         ),
     ]
- 

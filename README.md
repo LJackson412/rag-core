@@ -1,4 +1,4 @@
-# LLM Extractor & RAG App
+# RAG App
 
 A modular **Retrieval-Augmented Generation (RAG)** stack with two indexing pipelines (OCR-based and LLM extraction) and a two-stage retrieval process with LLM compression. The setup is designed for fast experimentation and uses **LangGraph/LangChain** and a **Chroma** vector store. All model and storage providers are interchangeable.
 
@@ -59,12 +59,6 @@ langgraph dev                 # starts the local LangGraph Dev/Studio interface
 3. **Start run:** Execute the desired node in the Studio view or trigger the entire graph.
 
 ### Example Calls
-**Retrieval Graph** – use existing collection `./data/DB_ZB25.pdf`:
-- `collection_id`: `DB_ZB`
-- `doc_id`: `DB_ZB_S55` (`95776bb8-7907-486c-b1fb-04e456c44e2c`)
-- `query` examples:
-  - "What is the DB doing regarding sustainability?"
-  - "How many employees does the DB Group have worldwide?"
 
 **Indexers** – existing collections (already stored in `.chroma_directory`):
 - **LLM Indexer** `collection_id: Cancom_LLM`

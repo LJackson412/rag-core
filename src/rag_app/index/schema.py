@@ -4,9 +4,10 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
-# NOTE: 
-# LLM segment attributes are used as prompts via structured output 
+# NOTE:
+# LLM segment attributes are used as prompts via structured output
 # in LLM graph and OCR graph for metadata generation.
+
 
 class BaseLLMSegmentAttributes(BaseModel):
     language: Annotated[
@@ -48,6 +49,7 @@ class BaseLLMSegmentAttributes(BaseModel):
 
 # -------------------------------------------------------------------------------
 
+
 class BaseSegmentAttributes(BaseModel):
     extracted_content: Annotated[
         str,
@@ -65,7 +67,7 @@ class BaseSegmentAttributes(BaseModel):
             description="",
         ),
     ]
-    
+
 
 # -------------------------------------------------------------------------------
 class LLMException(BaseModel):

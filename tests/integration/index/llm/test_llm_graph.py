@@ -39,7 +39,6 @@ def create_config_and_input(
     )
     index_state = InputIndexState(path=doc_data["path"])
 
-
     yield {
         "index_config": index_config,
         "index_state": index_state,
@@ -47,7 +46,6 @@ def create_config_and_input(
     config = IndexConfig.from_runnable_config(index_config)
     vstore = build_vstore(config.embedding_model, config.collection_id)
     vstore.delete_collection()
-
 
 
 @pytest.mark.asyncio

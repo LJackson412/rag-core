@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 from rag_app.index.schema import BaseLLMSegmentAttributes, BaseSegmentAttributes
 
 # NOTE: LLM-Segements are used as Prompt for the LLM.
-# They are transferred to the LLM via structured output. 
+# They are transferred to the LLM via structured output.
+
 
 class LLMTextSegment(BaseLLMSegmentAttributes):
     extracted_content: Annotated[
@@ -143,9 +144,7 @@ class LLMSegments(BaseModel):
         list[LLMTextSegment],
         Field(
             default_factory=list,
-            description=(
-                "List of semantically coherent document text sections"
-            ),
+            description=("List of semantically coherent document text sections"),
         ),
     ]
     figures: Annotated[
@@ -159,9 +158,7 @@ class LLMSegments(BaseModel):
         list[LLMTableOrListSegment],
         Field(
             default_factory=list,
-            description=(
-                "List of detected tables and lists"
-            ),
+            description=("List of detected tables and lists"),
         ),
     ]
     code_or_formulas: Annotated[
@@ -184,6 +181,7 @@ class LLMSegments(BaseModel):
             ),
         ),
     ]
+
 
 # -------------------------------------------------------------------------------
 
@@ -246,4 +244,3 @@ class OtherSegment(BaseSegmentAttributes):
             ),
         ),
     ]
-

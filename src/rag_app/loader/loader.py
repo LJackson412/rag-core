@@ -93,7 +93,6 @@ def load_imgs_from_pdf(pdf_path: str) -> List[PDFImage]:
     return images
 
 
-
 def load_page_imgs_from_pdf(pdf_path: str) -> list[PDFImage]:
     """
     Load every PDF page as an image (Base64-kodiert) und liefere eine Liste von PDFImage.
@@ -122,6 +121,7 @@ def load_page_imgs_from_pdf(pdf_path: str) -> list[PDFImage]:
 
     return pdf_imgs
 
+
 def load_tables_from_pdf(pdf_path: str) -> list[PDFTable]:
     "detectron2_onnx: used for  document layout"
     "tesseract: for ocr"
@@ -144,5 +144,3 @@ def load_tables_from_pdf(pdf_path: str) -> list[PDFTable]:
         pdf_tables.append(pdf_table)
 
     return pdf_tables
-
-

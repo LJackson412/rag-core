@@ -12,12 +12,11 @@ T = TypeVar("T", bound="IndexConfig")
 
 class IndexConfig(BaseModel):
     """Configurable Indexing Mode for RAG Index Graph."""
+
     collection_id: Annotated[
         str,
         Field(
-            description=(
-                "A collection is a container of documents in the VStore"
-            ),
+            description=("A collection is a container of documents in the VStore"),
             json_schema_extra={
                 "langgraph_nodes": ["save"],
             },
@@ -67,7 +66,6 @@ class IndexConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
-
 
     @classmethod
     def from_runnable_config(cls: type[T], config: RunnableConfig | None = None) -> T:

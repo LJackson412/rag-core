@@ -19,9 +19,7 @@ class InputIndexState(BaseModel):
         str,
         Field(
             ...,
-            description=(
-                "Path to the PDF that should be indexed"
-            ),
+            description=("Path to the PDF that should be indexed"),
         ),
     ]
 
@@ -31,55 +29,42 @@ class OutputIndexState(BaseModel):
         list[TextSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-
-            ),
+            description=(""),
         ),
     ]
     image_segments: Annotated[
         list[ImageSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     table_segments: Annotated[
         list[TableOrListSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     code_or_formula_segments: Annotated[
         list[CodeOrFormulaSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     other_segments: Annotated[
         list[OtherSegment],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     index_docs: Annotated[
         list[Document],
         Field(
             default_factory=list,
-            description=(
-                ""
-            ),
+            description=(""),
         ),
     ]
     llm_exceptions: Annotated[list[LLMException], add] = Field(
@@ -101,4 +86,3 @@ class OverallIndexState(InputIndexState, OutputIndexState):
             description=(""),
         ),
     ]
-    
