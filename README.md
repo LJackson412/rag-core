@@ -81,4 +81,4 @@ langgraph dev                 # startet lokale LangGraph-Dev/Studio-Oberfläche
 - Alternative 1-Stage-Retriever.
 - Ähnlichkeitsscore in Dokument-Metadaten zurückschreiben.
 - Prompt-Optimierung und Benchmarking.
-
+- Evaluation auf verschiedenen Testdatensätzen

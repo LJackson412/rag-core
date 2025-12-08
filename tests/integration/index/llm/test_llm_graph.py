@@ -17,15 +17,15 @@ class IndexGraphData(TypedDict):
 @pytest.fixture(
     params=[
         {
-            "doc_id": "Cancom_240514",
+            "doc_id": "Test_Cancom_240514",
             "path": "./data/Cancom/240514_CANCOM_Zwischenmitteilung.pdf",
         },
         {
-            "doc_id": "Cancom_20241112",
+            "doc_id": "Test_Cancom_20241112",
             "path": "./data/Cancom/20241112_CANCOM_Zwischenmitteilung.pdf",
         },
     ],
-    ids=["Cancom_240514", "Cancom_20241112"],
+    ids=["Test_Cancom_240514", "Test_Cancom_20241112"],
 )
 def create_config_and_input(
     request: pytest.FixtureRequest,
@@ -34,7 +34,7 @@ def create_config_and_input(
     index_config = RunnableConfig(
         configurable={
             "doc_id": doc_data["doc_id"],
-            "collection_id": "Cancom_LLM",
+            "collection_id": "Test_Cancom_LLM",
         }
     )
     index_state = InputIndexState(path=doc_data["path"])
