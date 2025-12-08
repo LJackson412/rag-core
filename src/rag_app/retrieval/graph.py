@@ -114,7 +114,7 @@ async def compress_docs(
         
         extracted = doc.metadata.get("extracted_content", "N/A")
         
-        if doc.metadata.get("chunk_type") == "Image":
+        if doc.metadata.get("chunk_type") == "ImageOCR": # Images from LLM-Graph excluded, because the LLM extract the text from the image
             text_prompt = compress_docs_prompt.format(
                 question=user_question,
                 doc_content="Image",

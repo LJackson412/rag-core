@@ -123,7 +123,7 @@ async def llm_extract(
 
         for image_segment in llm_response.figures:
             chunk_id = make_chunk_id(
-                chunk_type="Image",
+                chunk_type="ImageLLM",
                 collection_id=collection_id,
                 doc_id=doc_id,
                 chunk_index=chunk_index,
@@ -133,7 +133,7 @@ async def llm_extract(
                     extracted_content=image_segment.extracted_content,
                     metadata={
                         **state.document_metadata,
-                        "chunk_type": "Image",
+                        "chunk_type": "ImageLLM",
                         "page_number": pdf_page_img.page_number,
                         "chunk_index": chunk_index,
                         "chunk_id": chunk_id,

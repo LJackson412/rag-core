@@ -5,11 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.index.ocr.prompts import (
-    GEN_IMG_METADATA_PROMPT,
-    GEN_TABLE_METADATA_PROMPT,
-    GEN_TEXT_METADATA_PROMPT,
-)
+from rag_app.index.ocr.prompts import GEN_METADATA_PROMPT
 
 T = TypeVar("T", bound="IndexConfig")
 
@@ -78,8 +74,8 @@ class IndexConfig(BaseModel):
             },
         ),
     ]
-    gen_text_metadata_prompt: str = Field(
-        default=GEN_TEXT_METADATA_PROMPT,
+    gen_metadata_prompt: str = Field(
+        default=GEN_METADATA_PROMPT,
         description="System prompt for generating metadata",
         json_schema_extra={
             "langgraph_nodes": ["extract_text"],
@@ -95,27 +91,6 @@ class IndexConfig(BaseModel):
         default=900,
         description="Chunk Size for recursive text splitting",
         json_schema_extra={"langgraph_nodes": ["extract_text"]},
-    )
-    # ------------------------------------------------------------------------
-
-
-    gen_img_metadata_prompt: str = Field(
-        default=GEN_IMG_METADATA_PROMPT,
-        description="System prompt for generating metadata",
-        json_schema_extra={
-            "langgraph_nodes": ["extract_imgs"],
-            "langgraph_type": "prompt",
-        },
-    )
-    # ------------------------------------------------------------------------
-
-    gen_table_metadata_prompt: str = Field(
-        default=GEN_TABLE_METADATA_PROMPT,
-        description="System prompt for generating metadata",
-        json_schema_extra={
-            "langgraph_nodes": ["extract_tables"],
-            "langgraph_type": "prompt",
-        },
     )
     # ------------------------------------------------------------------------
 
