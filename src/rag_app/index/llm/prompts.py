@@ -1,4 +1,4 @@
-EXTRACT_DATA_PROMPT = """
+EXTRACT_DATA_FROM_PDF_PROMPT = """
 You receive a single document page as an image.
 Extract all visible content according to the provided schema.\n\n
 General rules:\n

@@ -1,104 +1,101 @@
 # LLM Extractor & RAG App
 
-This application combines a multimodal extractor (PDF → structured chunks) with a two-stage Retrieval-Augmented Generation (RAG) pipeline. LangGraph orchestrates the individual nodes, Chroma serves as the in-memory vector store, and OpenAI models provide both embeddings and responses.
+A modular **Retrieval-Augmented Generation (RAG)** stack with two indexing pipelines (OCR-based and LLM extraction) and a two-stage retrieval process with LLM compression. The setup is designed for fast experimentation and uses **LangGraph/LangChain** and a **Chroma** vector store. All model and storage providers are interchangeable.
 
-- **Tech Stack:** LangGraph (Python), Chroma vector store (in-memory), OpenAI models (Embeddings, GPT-4o/4.1 family) – interchangeable with your own providers.
-- **Indexing Flow:** PDF → PNG projection → LLM extraction with JSON schema → store including metadata (Doc ID, language, page range) in the vector store.
-- **Retrieval Flow:** User query → multi-query expansion → Stage 1 (vector store recall) → Stage 2 (LLM re-ranking/filtering) → answer synthesis including references and the input language.
+## Quick Overview
+- **Two indexers**: OCR extraction with metadata enrichment and LLM-based extraction/splitting.
+- **Retrieval**: 2-stage retriever with LLM compression for focused answers.
+- **LangGraph Dev/Studio**: Run graphs locally via `langgraph dev` and control them visually.
+- **Sample data**: CANCOM documents are already indexed in `.chroma_directory` and ready to use.
 
-## Setup & Launch
+## Architecture
+### Indexing Pipelines
 
-1. **Prerequisites:**  
-   - Install *poppler* for `pdf2image`, and adjust the path in `.env` if necessary:  
-     - https://github.com/oschwartz10612/poppler-windows/releases/  
-     - Define the path in `.env` as `POPLER_PATH`
-   - Add environment variables like `OPENAI_API_KEY` in `.env`
-   - Optional for LangGraph/LangSmith UI: `LANGSMITH_API_KEY`
+#### OCR Indexer
+Extracts text from PDF pages (PNG images), enriches it with LLM metadata, and persists it in Chroma.
 
-2. **Install dependencies & start the local runtime:**
+**Diagram**
+![UML: OCR-Indexer](/docs/index_ocr_uml.png)
 
+**Studio View**
+![Studio: OCR-Indexer](/docs/ocr_indexer_studio.png)
+
+#### LLM Indexer
+Uses an LLM for text extraction and chunking, adds metadata, and writes to Chroma.
+
+**Diagram**
+![UML: LLM-Indexer](/docs/index_llm_uml.png)
+
+**Studio View**
+![Studio: LLM-Indexer](/docs/llm_indexer_studio.png)
+
+### Retrieval Process (2-Stage with Compression)
+- Initial ranking via vector similarity, followed by LLM compression on relevant passages.
+- Supports multilingual queries and can target both OCR and LLM indexes.
+
+**Diagram**
+![UML: Retriever](/docs/retriever_uml.png)
+
+
+**Studio View**
+![Studio: Retriever](/docs/retriever_studio.png)
+
+## Prerequisites
+- **Python 3.12** (recommended) and `virtualenv` or `venv`.
+- **poppler** for `pdf2image` (set the path in `.env` as `POPLER_PATH` if needed; Windows build: https://github.com/oschwartz10612/poppler-windows/releases/).
+- Provide API keys via `.env` (at least `OPENAI_API_KEY`; optionally `LANGSMITH_API_KEY`).
+
+## Installation & Startup
 ```bash
 python -m venv .venv          # alternatively: py -3.12 -m venv .venv
 source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e .[dev]
-langgraph dev 
+langgraph dev                 # starts the local LangGraph Dev/Studio interface
 ```
 
-## How to Use the Graphs
+## Running Graphs in LangGraph Studio
+1. **Choose a graph:** Switch between `index_graph` (OCR/LLM index) and `retrieval_graph` in the UI.
+2. **Set parameters:** Adjust `collection_id`, `doc_id`, and optionally `chunking_config` to your data.
+3. **Start run:** Execute the desired node in the Studio view or trigger the entire graph.
 
-### LangSmith UI
+### Example Calls
+**Retrieval Graph** – use existing collection `./data/DB_ZB25.pdf`:
+- `collection_id`: `DB_ZB`
+- `doc_id`: `DB_ZB_S55` (`95776bb8-7907-486c-b1fb-04e456c44e2c`)
+- `query` examples:
+  - "What is the DB doing regarding sustainability?"
+  - "How many employees does the DB Group have worldwide?"
 
-1. **Select a graph:** After running `langgraph dev`, you can switch between `index_graph` and `retrieval_graph` via the LangGraph UI (or LangSmith, if connected).
-2. **Set parameters:** Each graph accepts structured inputs. Before execution, ensure that `collection_id`, `doc_id`, and (if applicable) `chunking_config` match your documents.
+**Indexers** – existing collections (already stored in `.chroma_directory`):
+- **LLM Indexer** `collection_id: Cancom_LLM`
+  - `doc_id: Cancom_240514`, `path: ./data/Cancom/240514_CANCOM_Zwischenmitteilung.pdf`
+  - `doc_id: Cancom_20241112`, `path: ./data/Cancom/20241112_CANCOM_Zwischenmitteilung.pdf`
+- **OCR Indexer** `collection_id: Cancom_OCR`
+  - `doc_id: Cancom_240514`, `path: ./data/Cancom/240514_CANCOM_Zwischenmitteilung.pdf`
+  - `doc_id: Cancom_20241112`, `path: ./data/Cancom/20241112_CANCOM_Zwischenmitteilung.pdf`
 
-**Retrieval Graph**
-Example with an already indexed collection in `path: ./data/DB_ZB25.pdf`:
+**Retrieval Queries**
+- Query entire collection: `collection_id = Cancom_LLM` or `Cancom_OCR`, `doc_id = None`
+  - Example question: "How does CANCOM describe the impact of acquiring the KBC / CANCOM Austria Group on revenue, gross profit, and EBITDA in the Q1 2024 and Q3 2024 interim reports?"
+- Query a single document: `collection_id = Cancom_LLM/OCR`, `doc_id = Cancom_240514`
+  - Example questions:
+    - "Where is Cancom SE located and what phone number can they be reached at?" (evidence page 13)
+    - "What is the percentage and absolute difference in inventories between 12/31/2023 and 03/31/2024?" (evidence page 18)
 
-* `collection_id` = DB_ZB, `doc_id` = DB_ZB_S55 (95776bb8-7907-486c-b1fb-04e456c44e2c)
-* `query`:
-  * Was macht die DB in Bezug auf Nachhaltigkeit?
-  * Wie viele Arbeitskräfte hat der DB Konzern auf der ganzen Welt?
+## Operations and Troubleshooting Notes
+- **Set language:** Choose the search language to match the document language, including for multimodal embeddings.
+- **Extraction:** Each segment metadata entry contains a language tag; models should answer in that language.
+- **Rate limits:** Different models can have their own limits; optionally configure a rate limiter per provider (OpenAI limits: <https://platform.openai.com/settings/organization/limits>).
+- **Logging:** Exceptions from the extractor are logged and returned in the state.
 
-**Index Graph**
-Example Run 1:
+### Known Limitations
+- Large, densely described pages can cause `LengthFinishReasonError` because PNG + prompt exceed model length.
+- The OCR indexer's `extract_text_node` currently processes table text; combined with `extract_tables` this can lead to duplicate segments.
+- Prompts are generic and should be adapted for new domains.
 
-* `collection_id: DB_ZB_Pages`
-* `path: ./data/DB_ZB25_S73.pdf`
-* `doc_id: DB_ZB25_S73`
-
-Example Run 2:
-
-* `collection_id: DB_ZB_Pages`
-* `path: ./data/DB_ZB25_S73.pdf`
-* `doc_id: DB_ZB25_S73`
-
-Once indexed, you can query both the collection and individual documents. You can also copy your own PDFs into `./data` and index them.
-
-### Tests
-
-* The same use cases can be executed via `pytest`.
-
-## Operational Notes & Tips
-
-* Set the **search language** to match the document language to improve semantic similarity – also for multimodal embeddings.
-* The **extraction** process tags each segment’s language and instructs the model to read content in that same language.
-* **Rate limits** vary between models; if you use a mixed provider stack, consider applying a rate limiter per model family (see OpenAI limits: [https://platform.openai.com/settings/organization/limits](https://platform.openai.com/settings/organization/limits)).
-* **Logging/Debugging:** Exceptions from the extractor are output via the logger.
-
-### Known Exception During PDF Indexing
-
-* When processing large, densely written pages, the model may stop with a `LengthFinishReasonError`.
-* **Cause:** Each page is converted into a 200/120-DPI PNG and sent (as base64) together with the prompt and expected structured output. Large image embeddings combined with a long prompt can exceed the model’s response limit.
-* **Behavior:** Such pages are logged and skipped during batch runs.
-
-
-## Model Recommendations for the RAG App
-### OpenAI
-| Graph     | Step / Component         | Purpose                                          | Recommended Model        | Alternatives                        | When to Use Alternatives                                                                    |
-| --------- | ------------------------ | ------------------------------------------------ | ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------- |
-| Shared    | Embeddings (Chroma)      | Vector representations for retrieval & indexing  | `text-embedding-3-small` | `text-embedding-3-large`            | Use **large** if retrieval quality outweighs cost.                                          |
-| Retrieval | `generate_questions`     | Generate query variations in the input language  | `gpt-4o-mini`            | `gpt-4o`, `gpt-4.1`, `gpt-4.1-mini` | Use **full models** for complex/domain-specific queries; `4.1-mini` for a consistent stack. |
-| Retrieval | `compress_docs`          | Classify document chunks as relevant or not      | `gpt-4o-mini`            | `gpt-4o`, `gpt-4.1-mini`            | Use **gpt-4o** when relevance is subtle (e.g., legal/medical); `4.1-mini` for lower costs.  |
-| Retrieval | `generate_answer`        | Generate final structured answer with references | `gpt-4.1` or `gpt-4o`    | `gpt-4.1-mini`, `gpt-4o-mini`       | Use **mini** if latency/cost is critical and slight quality loss is acceptable.             |
-| Index     | `extract` (PDF → chunks) | Multimodal extraction from PDF pages             | `gpt-4o` (multimodal)    | `gpt-4o-mini`                       | Use **mini** for cost-efficient bulk indexing with some OCR noise.                          |
-| Index     | `save`                   | Store chunks in Chroma with metadata             | –                        | –                                   | No LLM required.                                                                            |
-
-### Open-Source
-| Graph     | Step / Component     | Purpose                                         | Recommended Model              | Alternatives                                                               | When to Use Alternatives                                                                                          |
-| --------- | -------------------- | ----------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Shared    | Embeddings (Chroma)  | Vector representations for retrieval & indexing | **BAAI/bge-m3** (multilingual) | `intfloat/e5-large-v2`, `jinaai/jina-embeddings-v2`, `nomic-embed-text-v1` | Use **E5** for strong EN quality, **Jina** for long context/multilingual corpora, **Nomic** for top-tier quality. |
-| Retrieval | `generate_questions` | Generate query variations                       | **Meta Llama-3.1-8B-Instruct** | `Qwen2.5-7B`, `Mistral-7B`, `Teuken-7B`                                    | Use **Qwen2.5** for tables/code/long context; **Mistral** for speed; **Teuken** for EU/DE support.                |
-| Retrieval | `compress_docs`      | Relevance classification per chunk              | **Qwen2.5-7B-Instruct**        | `Llama-3.1-8B`, `Mistral-7B`, smaller `Qwen2.5` variants                   | Use smaller models for throughput or cost; **Llama-3.1-8B** to standardize on Llama.                              |
-| Retrieval | `generate_answer`    | Final answer with references                    | **Llama-3.1-70B-Instruct**     | `Llama-3.1-405B` (API), `Qwen2.5-72B`, `Mixtral-8x7B`                      | Use large models for highest quality; **Mixtral/Qwen** for MoE or APAC stacks.                                    |
-| Index     | `extract`            | Multimodal extraction                           | **Qwen2.5-VL-7B-Instruct**     | `LLaVA-1.6-34B`, `InternVL2-26B`                                           | Use larger models for complex layouts/charts; **Qwen2.5-VL** for balance of quality & cost.                       |
-| Index     | `save`               | Store chunks in Chroma                          | –                              | –                                                                          | No LLM required.                                                                                                  |
-
-### Proprietary Models (Non-OpenAI)
-| Graph     | Step / Component     | Purpose                                         | Recommended Model              | Alternatives                                         | When to Use Alternatives                                                                       |
-| --------- | -------------------- | ----------------------------------------------- | ------------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Shared    | Embeddings (Chroma)  | Vector representations for retrieval & indexing | **Voyage AI – voyage-3-large** | `Cohere embed-multilingual-v3.0`, `Gemini Embedding` | If you're already using Cohere/Gemini or need >100 languages.                                  |
-| Retrieval | `generate_questions` | Generate semantic query variations              | **Google Gemini 1.5 Flash**    | `Claude Haiku (4.x)`, `Mistral Small (API)`          | Use **Flash** for high query volume/cost focus; others for EU hosting.                         |
-| Retrieval | `compress_docs`      | Relevance classification per chunk              | **Gemini 1.5 Flash**           | `Mistral Small`, `Claude Haiku`                      | Use **Flash** for large batch jobs; **Mistral** for EU hosting.                                |
-| Retrieval | `generate_answer`    | Generate final, referenced answer               | **Claude 3.5 Sonnet**          | `Gemini Pro`, `Mistral Large 2`, `Cohere Command A`  | Use **Gemini** for long/multimodal context; **Mistral** for multilingual EU needs.             |
-| Index     | `extract`            | Multimodal PDF extraction                       | **Gemini 1.5 Pro (Vision)**    | `Gemini Flash`, `Claude 3.5 Vision`, `Voyage MM-3`   | Use **Pro** for complex PDFs; **Flash** for batch jobs; **Voyage** for embedding-first setups. |
-| Index     | `save`               | Store chunks in Chroma                          | –                              | –                                                    | No LLM required.                                                                               |
+### Ideas for Further Development
+- Optional LLM enrichment in the OCR graph.
+- Alternative 1-stage retriever.
+- Write similarity score back into document metadata.
+- Prompt optimization and benchmarking.
+- Evaluation on various test datasets.

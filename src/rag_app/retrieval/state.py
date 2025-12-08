@@ -7,23 +7,15 @@ from pydantic import BaseModel, Field
 
 from rag_app.retrieval.schema import LLMAnswer
 
-MessagesState = Annotated[list[AnyMessage],add_messages]
+MessagesState = Annotated[list[AnyMessage], add_messages]
+
 
 class InputRetrievalState(BaseModel):
-    messages: Annotated[
-        MessagesState,
-        Field(
-            description="User Question for Retrieval"
-        )
-    ]
-    
+    messages: Annotated[MessagesState, Field(description="User Question for Retrieval")]
+
+
 class OutputRetrievalState(BaseModel):
-    messages: Annotated[
-        MessagesState,
-        Field(
-            description="Generation AI Message"
-        )
-    ]
+    messages: Annotated[MessagesState, Field(description="Generation AI Message")]
     llm_questions: Annotated[
         list[str],
         Field(
@@ -55,8 +47,9 @@ class OutputRetrievalState(BaseModel):
         ),
     ]
     llm_answer: Annotated[
-        LLMAnswer,
+        LLMAnswer | None,
         Field(
+            default=None,
             description=(
                 "Structured answer produced by the generate_answer node. Contains the natural-language response, supporting "
                 "quote, and the chunk_ids cited as evidence."
@@ -73,10 +66,7 @@ class OutputRetrievalState(BaseModel):
             ),
         ),
     ]
- 
-
 
 
 class OverallRetrievalState(InputRetrievalState, OutputRetrievalState):
     """"""
-   

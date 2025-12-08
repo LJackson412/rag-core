@@ -1,13 +1,15 @@
+import asyncio
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import Any, Dict, cast
 
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage
+from langchain_core.language_models.base import LanguageModelInput
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.factory.factory import abuild_vstore, build_chat_model
+from rag_app.factory.factory import build_chat_model, build_vstore
 from rag_app.retrieval.config import RetrievalConfig
 from rag_app.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
 from rag_app.retrieval.state import (
@@ -57,14 +59,21 @@ async def retrieve_docs(
     include_original_question = retrieval_config.include_original_question
     user_question = cast(str, state.messages[-1].content)
 
-    vstore = await abuild_vstore(embedding_model, collection_id)
+    vstore = await asyncio.to_thread(build_vstore, embedding_model, collection_id)
+    
+    search_kwargs: Dict[str, Any] = {"k": k}
+
+    if doc_id is not None:
+        search_kwargs["filter"] = {"doc_id": doc_id}
 
     retriever = vstore.as_retriever(
-        search_type="similarity", search_kwargs={"k": k, "filter": {"doc_id": doc_id}}
+        search_type="similarity",
+        search_kwargs=search_kwargs,
     )
-    
+  
+
     if include_original_question:
-        queries = [user_question] + state.llm_questions 
+        queries = [user_question] + state.llm_questions
         docs_per_query = await retriever.abatch(queries)
     else:
         docs_per_query = await retriever.abatch(state.llm_questions)
@@ -93,28 +102,46 @@ async def compress_docs(
 ) -> dict[str, list[Document]]:
     retrieval_config = RetrievalConfig.from_runnable_config(config)
     compress_docs_model = retrieval_config.compress_docs_model
-    compress_docs_prompt = retrieval_config.compress_docs_prompt
+    compress_docs_prompt: str = retrieval_config.compress_docs_prompt  # dein String
     user_question = state.messages[-1].content
 
-    prompt = PromptTemplate(
-        input_variables=["question", "doc_content"], template=compress_docs_prompt
-    )
-
-    strucuterd_llm = build_chat_model(compress_docs_model).with_structured_output(
+    structured_llm = build_chat_model(compress_docs_model).with_structured_output(
         LLMDecision
     )
 
-    chain = prompt | strucuterd_llm
+    llm_inputs: list[LanguageModelInput] = []
+    for doc in state.retrieved_docs:
+        
+        extracted = doc.metadata.get("extracted_content", "N/A")
+        
+        if doc.metadata.get("chunk_type") == "ImageOCR": # Images from LLM-Indexer excluded, because LLM extract text from the image not base64
+            text_prompt = compress_docs_prompt.format(
+                question=user_question,
+                doc_content="Image",
+            )
 
-    inputs = [
-        {
-            "question": user_question,
-            "doc_content": d.metadata.get("extracted_content", "N/A"),
-        }
-        for d in state.retrieved_docs
-    ]
+            llm_inputs.append(
+                [
+                    HumanMessage(
+                        content=[
+                            {"type": "text", "text": text_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": extracted},
+                            },
+                        ]
+                    )
+                ]
+            )
+        else:
+            text_prompt = compress_docs_prompt.format(
+                question=user_question,
+                doc_content=extracted,
+            )
 
-    llm_decisions = cast(list[LLMDecision], await chain.abatch(inputs))
+            llm_inputs.append([HumanMessage(content=text_prompt)])
+
+    llm_decisions = cast(list[LLMDecision], await structured_llm.abatch(llm_inputs))
 
     filtered_docs = []
     for dec, doc in zip(llm_decisions, state.retrieved_docs, strict=True):
@@ -138,8 +165,7 @@ async def generate_answer(
     )
 
     strucuterd_llm = build_chat_model(generate_answer_model).with_structured_output(
-        LLMAnswer,
-        include_raw=True
+        LLMAnswer, include_raw=True
     )
 
     chain = prompt | strucuterd_llm
@@ -174,18 +200,21 @@ async def generate_answer(
         "docs": _prepare_docs_for_prompt(filtered_docs),
     }
 
-    result =  await chain.ainvoke(inputs)
-    
+    result = await chain.ainvoke(inputs)
+
     ai_message = result["raw"]
     llm_answer = cast(LLMAnswer, result["parsed"])
-    
 
     chunk_ids = llm_answer.chunk_ids
     llm_evidence_docs = [
         doc for doc in filtered_docs if doc.metadata.get("chunk_id") in chunk_ids
     ]
 
-    return {"llm_answer": llm_answer, "llm_evidence_docs": llm_evidence_docs, "messages" : ai_message}
+    return {
+        "llm_answer": llm_answer,
+        "llm_evidence_docs": llm_evidence_docs,
+        "messages": [ai_message],
+    }
 
 
 builder = StateGraph(

@@ -5,60 +5,39 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.index.prompts import EXTRACT_DATA_PROMPT
+from rag_app.index.llm.prompts import EXTRACT_DATA_FROM_PDF_PROMPT
 
 T = TypeVar("T", bound="IndexConfig")
 
 
 class IndexConfig(BaseModel):
     """Configurable Indexing Mode for RAG Index Graph."""
-
-    doc_id: Annotated[
-        str,
-        Field(
-            description="document id for searching within a specific document",
-            json_schema_extra={
-                "langgraph_nodes": ["save"],
-            },
-        ),
-    ]
     collection_id: Annotated[
         str,
         Field(
             description=(
-                "ID of the collection to search within. "
-                "A collection is a container of documents in the Chroma VStore. "
-                "The value of collection_id must follow the required Chroma format."
+                "A collection is a container of documents in the VStore"
             ),
             json_schema_extra={
                 "langgraph_nodes": ["save"],
             },
         ),
     ]
-    extract_model: Annotated[
-        Literal["gpt-4o", "gpt-4o-mini"],
+    doc_id: Annotated[
+        str,
         Field(
-            default="gpt-4o-mini",
-            description=("Multimodal model for PDF extraction. "),
+            description="The document ID is used to identify a document when it is retrieved",
             json_schema_extra={
-                "langgraph_nodes": ["extract"],
+                "langgraph_nodes": ["save"],
             },
         ),
     ]
-    extract_data_prompt: str = Field(
-        default=EXTRACT_DATA_PROMPT,
-        description="The system prompt used for generating responses.",
-        json_schema_extra={
-            "langgraph_nodes": ["extract_node"],
-            "langgraph_type": "prompt",
-        },
-    )
     embedding_model: Annotated[
         Literal["text-embedding-3-small", "text-embedding-3-large"],
         Field(
-            default="text-embedding-3-small",
+            default="text-embedding-3-large",
             description=(
-                "OpenAI embedding model used for Chroma indexing. "
+                "Embedding model used for indexing "
                 "Use 'text-embedding-3-large' when you need maximum retrieval quality."
                 "Use the same embedding model for Retrieval"
             ),
@@ -67,6 +46,28 @@ class IndexConfig(BaseModel):
             },
         ),
     ]
+    extract_model: Annotated[
+        Literal["gpt-4.1", "gpt-4.1-mini"],
+        Field(
+            default="gpt-4.1",
+            description=(
+                "Multimodal model for PDF extraction"
+                "Extract and splits the page content and metadata from each PDF page as Image"
+            ),
+            json_schema_extra={
+                "langgraph_nodes": ["extract"],
+            },
+        ),
+    ]
+    extract_data_prompt: str = Field(
+        default=EXTRACT_DATA_FROM_PDF_PROMPT,
+        description="System prompt for generating extraction and splitting",
+        json_schema_extra={
+            "langgraph_nodes": ["extract_node"],
+            "langgraph_type": "prompt",
+        },
+    )
+
 
     @classmethod
     def from_runnable_config(cls: type[T], config: RunnableConfig | None = None) -> T:

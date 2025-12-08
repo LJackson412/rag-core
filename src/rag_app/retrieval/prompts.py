@@ -9,10 +9,7 @@ Question:
 """
 
 COMPRESS_DOCS_PROMPT = """
-Evaluate whether the following document segment is relevant to the question.
-
-Guidelines:
-- Respond in the same language as the question.
+Evaluate whether the following document segment is relevant to the question.\n
 
 Question:
 {question}
@@ -31,6 +28,6 @@ Guidelines:
 Question:
 {question}
 
-Relevant Document Segments:
+Document Segments:
 {docs}
 """

@@ -1,0 +1,102 @@
+@startuml
+skinparam backgroundColor #FFFFFF  
+skinparam shadowing false
+skinparam arrowColor black
+skinparam activityBackgroundColor lightgrey
+skinparam activityBorderColor black
+
+start
+
+:Transfer State & Config;
+    note left
+        State:
+        - messages
+        - llm_questions
+        - retrieved_docs
+        - filtered_docs
+
+        Config:
+        - collection_id
+        - doc_id
+        - embedding_model
+        - generate_questions_model
+        - generate_questions_prompt
+        - number_of_llm_generated_questions
+        - number_of_docs_to_retrieve
+        - include_original_question
+        - compress_docs_model
+        - compress_docs_prompt
+        - generate_answer_model
+        - generate_answer_prompt
+    end note
+
+
+partition "generate_questions" {
+
+:Prepare prompt with question + number_of_llm_generated_questions;
+:LLM (generate_questions_model) creates semantic follow-up questions -> list[str];
+:Add llm_questions to state;
+
+}
+
+
+partition "retrieve" {
+
+:Load vstore (collection_id, embedding_model);
+:Build queries: llm_questions [+ original question if enabled];
+repeat
+
+    :Run similarity search for query (k, optional doc_id filter);
+    :Collect docs per query;
+
+repeat while (Weitere Query?) is (Ja) not (Nein)
+
+:Deduplicate docs by chunk_id;
+:Add retrieved_docs to state;
+    note left
+        + retrieved_docs: list[Document]
+    end note
+
+}
+
+
+partition "compress_docs" {
+
+repeat
+
+    :Format compress_docs_prompt with question + doc content
+    (Images via image_url);
+    :LLM (compress_docs_model) decides relevance -> LLMDecision;
+    if (Relevant?) then (Ja)
+        :Dokument übernehmen;
+    else (Nein)
+        :Dokument exkludieren;
+    endif
+
+repeat while (Weiteres Dokument?) is (Ja) not (Nein)
+
+:Add filtered_docs to state;
+    note left
+        + filtered_docs: list[Document]
+    end note
+
+}
+
+
+partition "generate_answer" {
+
+:Prepare prompt with question + filtered_docs;
+:LLM (generate_answer_model) returns LLMAnswer + raw AIMessage;
+:Select llm_evidence_docs by chunk_id;
+:Add messages, llm_answer, llm_evidence_docs to state;
+    note left
+        + messages: list[AIMessage]
+        + llm_answer: LLMAnswer
+        + llm_evidence_docs: list[Document]
+    end note
+
+}
+
+
+stop
+@enduml

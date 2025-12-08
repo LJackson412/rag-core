@@ -17,17 +17,21 @@ class LLMQuestions(BaseModel):
             ),
         ),
     ]
+
+
 class LLMDecision(BaseModel):
     is_relevant: Annotated[
         bool,
         Field(
             description=(
-                "Set to true if the given document segment is relevant to the user’s question, i.e., "
+                "Set to true if the given document segment is relevant to the users question, i.e., "
                 "it directly answers the question or provides useful supporting context. "
                 "Set to false if the passage is not helpful for answering the question or is off-topic."
             ),
         ),
     ]
+
+
 class LLMAnswer(BaseModel):
     answer: Annotated[
         str,
@@ -41,17 +45,6 @@ class LLMAnswer(BaseModel):
             )
         ),
     ]
-    quote: Annotated[
-        str | None,
-        Field(
-            description=(
-                "A verbatim quote copied directly from one of the provided document "
-                "segments. Do not rephrase, summarize, or correct spelling or grammar."
-                "If no document segment is relevant, leave the answer blank"
-            )
-        ),
-    ]
-
     chunk_ids: Annotated[
         list[str],
         Field(
