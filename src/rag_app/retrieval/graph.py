@@ -190,6 +190,7 @@ async def generate_answer(
         return "\n".join(parts)
 
     filtered_docs = state.filtered_docs
+    # TODO: Reduce docs to match context-window and add count of reduced docs to state
     prompt = generate_answer_prompt.format(
         question=user_question,
         docs=_prepare_docs_for_prompt(filtered_docs)

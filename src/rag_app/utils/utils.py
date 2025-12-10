@@ -38,6 +38,15 @@ def pretty_print_docs(docs: Sequence[DocOrScoredDoc]) -> None:
     print(f"\n{'-' * 100}\n".join(parts))
 
 
+def pretty_print_elements(elements) -> None:
+    for i, e in enumerate(elements, start=1):
+        print(f"\n===== Element {i} ({e.__class__.__name__}) =====")
+        print("Typ:", e.to_dict().get("type"))
+        print("Text:", repr(e.text[:200]) + ("..." if len(e.text) > 200 else ""))
+        print("Metadata:")
+        print(json.dumps(e.metadata.to_dict(), indent=2, ensure_ascii=False))
+
+
 def return_docs_on_page(
     docs: list[DocOrScoredDoc], page: int, chunk_type: str | None = None
 ) -> list[DocOrScoredDoc]:
