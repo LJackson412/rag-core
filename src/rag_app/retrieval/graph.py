@@ -101,7 +101,7 @@ async def compress_docs(
 ) -> dict[str, list[Document]]:
     retrieval_config = RetrievalConfig.from_runnable_config(config)
     compress_docs_model = retrieval_config.compress_docs_model
-    compress_docs_prompt: str = retrieval_config.compress_docs_prompt  
+    compress_docs_prompt: str = retrieval_config.compress_docs_prompt
     user_question = state.messages[-1].content
 
     structured_llm = build_chat_model(compress_docs_model).with_structured_output(
@@ -110,7 +110,7 @@ async def compress_docs(
 
     llm_inputs: list[LanguageModelInput] = []
     for doc in state.retrieved_docs:
-
+        
         extracted = doc.metadata.get("extracted_content", "N/A")
 
         if (
@@ -192,22 +192,18 @@ async def generate_answer(
     filtered_docs = state.filtered_docs
     # TODO: Reduce docs to match context-window and add count of reduced docs to state
     prompt = generate_answer_prompt.format(
-        question=user_question,
-        docs=_prepare_docs_for_prompt(filtered_docs)
+        question=user_question, docs=_prepare_docs_for_prompt(filtered_docs)
     )
     llm_input = HumanMessage(content=prompt)
 
-    llm_answer  = cast(LLMAnswer, await strucuterd_llm.ainvoke([llm_input]))
+    llm_answer = cast(LLMAnswer, await strucuterd_llm.ainvoke([llm_input]))
 
     chunk_ids = llm_answer.chunk_ids
     llm_evidence_docs = [
         doc for doc in filtered_docs if doc.metadata.get("chunk_id") in chunk_ids
     ]
 
-    return {
-        "llm_answer": llm_answer,
-        "llm_evidence_docs": llm_evidence_docs
-    }
+    return {"llm_answer": llm_answer, "llm_evidence_docs": llm_evidence_docs}
 
 
 builder = StateGraph(

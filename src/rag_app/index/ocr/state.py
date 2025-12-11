@@ -1,11 +1,9 @@
-from operator import add
-from typing import Annotated, Any
+from typing import Annotated
 
 from langchain_core.documents import Document
 from pydantic import BaseModel, Field
 
-from rag_app.index.ocr.schema import ImageSegment, TableSegment, TextSegment
-from rag_app.index.schema import LLMException
+from rag_app.index.ocr.schema import Segment
 
 
 class InputIndexState(BaseModel):
@@ -18,22 +16,22 @@ class InputIndexState(BaseModel):
 
 
 class OutputIndexState(BaseModel):
-    text_segments: Annotated[
-        list[TextSegment],
+    texts: Annotated[
+        list[Segment],
         Field(
             default_factory=list,
             description=(""),
         ),
     ]
-    table_segments: Annotated[
-        list[TableSegment],
+    tables: Annotated[
+        list[Segment],
         Field(
             default_factory=list,
             description=(""),
         ),
     ]
-    image_segments: Annotated[
-        list[ImageSegment],
+    imgs: Annotated[
+        list[Segment],
         Field(
             default_factory=list,
             description=(""),
@@ -49,22 +47,7 @@ class OutputIndexState(BaseModel):
             ),
         ),
     ]
-    llm_exceptions: Annotated[list[LLMException], add] = Field(
-        default_factory=list,
-        description=(
-            "Errors raised by the LLM structured extraction nodes. Clients can inspect these "
-            "to selectively retry failed chunks without rerunning the entire indexing job."
-        ),
-    )
 
 
 class OverallIndexState(InputIndexState, OutputIndexState):
     """Combined input/output schema used as the shared state across the graph."""
-
-    document_metadata: Annotated[
-        dict[str, Any],
-        Field(
-            default_factory=dict,
-            description=(""),
-        ),
-    ]

@@ -8,11 +8,13 @@ from pdf2image import convert_from_path
 from unstructured.chunking.title import chunk_by_title
 from unstructured.partition.pdf import partition_pdf
 
+from rag_app.index.ocr.schema import Segment
+
 
 @dataclass(slots=True)
 class PDFImage:
     img_base64: str
-    ext: str  
+    ext: str
     page_number: int
 
     @property
@@ -80,7 +82,7 @@ def load_imgs_from_pdf(pdf_path: str) -> List[PDFImage]:
                 xref = img[0]
                 base_image = doc.extract_image(xref)
                 image_bytes = base_image["image"]
-                ext = base_image.get("ext", "png")  
+                ext = base_image.get("ext", "png")
                 b64_str = base64.b64encode(image_bytes).decode("ascii")
 
                 images.append(
@@ -146,46 +148,11 @@ def load_tables_from_pdf(pdf_path: str) -> list[PDFTable]:
 
     return pdf_tables
 
-@dataclass(slots=True)
-class Segment:
-    id: str
-    category: str         
-    text: str
-    lang: List[str]
-    page_number: int
-    file_directory: str
-    filename: str
-    last_modified: str
 
-    text_as_html: str  # used for tables
-    img_base64: str
-    img_mime_type: str
-    metadata: Dict[str, Any]
-    
-    @property
-    def image_url(self) -> str:
-        return f"data:{self.img_mime_type};base64,{self.img_base64}"
-
-
-@dataclass(slots=True)
-class CompositeSegment:
-    id: str
-    type: str             
-    text: str
-    lang: List[str]
-    page_number: int
-    file_directory: str
-    filename: str
-    last_modified: str
-
-    text_as_html: str      
-    metadata: Dict[str, Any]
-
-
-def load_and_split_pdf(path: str, lang: list[str] | None = None) -> Dict[str, List[Segment] | List[CompositeSegment]]:
+def load_and_split_pdf(path: str, lang: list[str] | None = None) -> List[Segment]:
     if lang is None:
         lang = ["eng", "deu"]
-    
+
     elements = partition_pdf(
         filename=path,
         strategy="hi_res",
@@ -197,68 +164,74 @@ def load_and_split_pdf(path: str, lang: list[str] | None = None) -> Dict[str, Li
         languages=lang,
     )
 
-    chunks = chunk_by_title(elements, include_orig_elements=True)
-
-    segments: List[Segment] = []
+    segments = []
     for e in elements:
-        md = e.metadata.to_dict()
 
-        segment = Segment(
-            id=e.id,
-            category=e.category,
-            text=e.text,
-            lang=md.get("languages") or [],
-            page_number=md.get("page_number") or -1,
-            file_directory=md.get("file_directory") or "",
-            filename=md.get("filename") or "",
-            last_modified=md.get("last_modified") or "",
-            text_as_html=md.get("text_as_html") or "",
-            img_base64=md.get("image_base64") or "",
-            img_mime_type=md.get("image_mime_type") or "",
-            metadata=md,
-        )
+        if e.category in ("Image"):
+            md = e.metadata.to_dict()
+            
+            page_number   = md.pop("page_number", -1)
+            file_directory= md.pop("file_directory", "")
+            filename      = md.pop("filename", "")
+            img_base64    = md.pop("image_base64", "") or ""
+            img_mime_type = md.pop("image_mime_type", "") or ""
 
-        segments.append(segment)
+            segment = Segment(
+                id=None, # updated later
+                source_id=e.id,
+                category="Image",
+                page_number=page_number,
+                file_directory=file_directory,
+                filename=filename,
+                text=e.text,
+                img_base64=img_base64,
+                img_mime_type=img_mime_type,
+                metadata=md
+            )
+            segments.append(segment)
+            
+        
+        if e.category in ("Table"):
+            md = e.metadata.to_dict()
+            
+            page_number   = md.pop("page_number", -1)
+            file_directory= md.pop("file_directory", "")
+            filename      = md.pop("filename", "")
+            text_as_html   = md.pop("text_as_html", "") or ""
 
-    composite_segments: List[CompositeSegment] = []
+            segment = Segment(
+                id=None, # updated later
+                source_id=e.id,
+                category="Table",
+                page_number=page_number,
+                file_directory=file_directory,
+                filename=filename,
+                text=e.text,
+                text_as_html=text_as_html,
+                metadata=md
+            )
+            segments.append(segment)
+
+    filtered_elements = [e for e in elements if e.category not in ("Table", "Image")]
+    chunks = chunk_by_title(filtered_elements, include_orig_elements=True)
+
     for chunk in chunks:
         md = chunk.metadata.to_dict()
 
-        composite_segments.append(
-            CompositeSegment(
-                id=chunk.id,
-                type=chunk.category,           
-                text=chunk.text,
-                lang=md.get("languages") or [],
-                page_number=md.get("page_number") or -1,
-                file_directory=md.get("file_directory") or "",
-                filename=md.get("filename") or "",
-                last_modified=md.get("last_modified") or "",
-                text_as_html=md.get("text_as_html") or "",
-                metadata=md,
-            )
+        page_number   = md.pop("page_number", -1)
+        file_directory= md.pop("file_directory", "")
+        filename      = md.pop("filename", "")
+
+        segment = Segment(
+            id=None, # updated later
+            source_id=e.id,
+            category="Text",
+            page_number=page_number,
+            file_directory=file_directory,
+            filename=filename,
+            text=e.text,
+            metadata=md
         )
+        segments.append(segment)
 
-    return {
-        "segments": segments,
-        "composite_segments": composite_segments,
-    }
-
-
-
-
-# if __name__ == "__main__":
-    
-#     from rag_app.config.settings import settings
-    
-#     elements = load_and_split_pdf(path="./data/Cancom/240514_CANCOM_Zwischenmitteilung.pdf", lang=None)
-    
-#     segments = elements["segments"]
-#     composite_segments = elements["composite_segments"]
-    
-#     for s in segments:
-#         pprint(asdict(s))
-    
-#     for cs in composite_segments:
-#         pprint(asdict(cs))
-    
+    return segments
