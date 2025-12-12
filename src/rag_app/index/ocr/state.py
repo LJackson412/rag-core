@@ -20,21 +20,21 @@ class OutputIndexState(BaseModel):
         list[Segment],
         Field(
             default_factory=list,
-            description=(""),
+            description=("text segements"),
         ),
     ]
     tables: Annotated[
         list[Segment],
         Field(
             default_factory=list,
-            description=(""),
+            description=("table segements"),
         ),
     ]
     imgs: Annotated[
         list[Segment],
         Field(
             default_factory=list,
-            description=(""),
+            description=("img segements"),
         ),
     ]
     index_docs: Annotated[
@@ -42,8 +42,8 @@ class OutputIndexState(BaseModel):
         Field(
             default_factory=list,
             description=(
-                "LangChain Document objects persisted in Chroma during the save node. Includes chunk metadata such as "
-                "doc_id, collection_id, and chunk_id that the retrieval graph relies on."
+                "LangChain Document objects persisted in Chroma during the save node."
+                "Segments are mapped to Document objects, before being stored in the vector database"
             ),
         ),
     ]

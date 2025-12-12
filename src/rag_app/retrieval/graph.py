@@ -204,7 +204,6 @@ async def generate_answer(
         return "\n".join(parts)
 
     def _build_user_message(prompt: str, docs: list[Document]) -> HumanMessage:
-        # collect image urls
         image_urls = []
         for doc in docs:
             if doc.metadata.get("category") == "Image":

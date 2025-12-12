@@ -4,10 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-# NOTE:
-# LLM segment attributes are used as prompts via structured output
-# in LLM graph and OCR graph for metadata generation.
-
+# NOTE: LLMMetaData is used for enriching segments with LLM with structured llm outputs
 
 class LLMMetaData(BaseModel):
     language: Annotated[
