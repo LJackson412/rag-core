@@ -237,7 +237,12 @@ def route_by_mode(state: OverallIndexState, config: RunnableConfig) -> list[str]
 
     if index_config.mode == "none":
         return ["save"]
-
+    if index_config.mode == "imgs":
+        return ["enrich_imgs_with_llm"]
+    if index_config.mode == "tables":
+        return ["enrich_tables_with_llm"]
+    if index_config.mode == "texts":
+        return ["enrich_texts_with_llm"]
     elif index_config.mode == "all":
         return [
             "enrich_texts_with_llm",
