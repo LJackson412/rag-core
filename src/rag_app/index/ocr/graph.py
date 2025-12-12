@@ -61,9 +61,6 @@ async def load_and_split(
             updated.append(replace(s, id=chunk_id, metadata=md))
         return updated
 
-            
-        
-    # TODO: create chunk id here
     tables = [s for s in segs if s.category == "Table"]
     imgs = [s for s in segs if s.category == "Image"]
     texts = [s for s in segs if s.category == "Text"]
