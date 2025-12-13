@@ -23,7 +23,7 @@ CASES = [
     [
         {
             "question": "Was ist der Maßnahmenplan?",
-            "path": "./data/Test/Test_M_1.pdf",
+            "path": "./data/Test/Test.pdf",
         },
         # Indexing config
         {
@@ -39,7 +39,7 @@ CASES = [
     [
         {
             "question": "Was ist der Maßnahmenplan?",
-            "path": "./data/Test/Test_M_1.pdf",
+            "path": "./data/Test/Test.pdf",
         },
         # Indexing config
         {
@@ -57,7 +57,7 @@ CASES = [
     [
         {
             "question": "Wo wohnt Luca Koch?",
-            "path": "./data/Test/Test_User.csv",
+            "path": "./data/Test/Test.csv",
         },
         # Indexing config
         {
@@ -75,6 +75,23 @@ CASES = [
         {
             "question": "Wo wohnt Luca Koch?",
             "path": "./data/Test/Test.docx",
+        },
+        # Indexing config
+        {
+            "doc_id": "1_Test_Docx",
+            "collection_id": "Test"
+        },
+        # Retrieval config
+        {
+            "doc_id": "1_Test_Docx",
+            "collection_id": "Test",
+        },
+        
+    ],
+    [
+        {
+            "question": "Wo wohnt Luca Koch?",
+            "path": "./data/Test/Test.xlsx",
         },
         # Indexing config
         {
