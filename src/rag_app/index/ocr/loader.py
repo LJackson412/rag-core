@@ -7,6 +7,7 @@ from unstructured.documents.elements import Element
 from unstructured.partition.csv import partition_csv
 from unstructured.partition.docx import partition_docx
 from unstructured.partition.pdf import partition_pdf
+from unstructured.partition.xlsx import partition_xlsx
 
 from rag_app.index.ocr.schema import Segment
 
@@ -149,6 +150,30 @@ def load_csv(
 
     return segments
 
+def load_xlsx(
+    path: str,
+    chunking: ChunkingConfig = DEFAULT_CHUNKING,
+) -> list[Segment]:
+    table_elements = partition_xlsx(filename=path)
+
+    segments: list[Segment] = []
+    # Table elements are not merged, regardless of chunk size
+    # and if a table is too large, only that table is split internally.
+    for e in table_elements:
+        for c in chunk_by_title(
+            [e],
+            max_characters=chunking.max_characters,
+            new_after_n_chars=chunking.new_after_n_chars,
+            overlap=chunking.overlap,
+            overlap_all=chunking.overlap_all,
+            combine_text_under_n_chars=0,
+            multipage_sections=chunking.multipage_sections,
+            include_orig_elements=chunking.include_orig_elements,
+        ):
+            segments.append(_segment_from_element(c, category="Table"))
+
+    return segments
+
 
 def load_docx(
     path: str,
@@ -207,6 +232,8 @@ def load(path: str, lang: list[str] | None = None) -> list[Segment]:
         return load_pdf(path, lang=lang)
     if suffix == ".csv":
         return load_csv(path)
+    if suffix == ".xlsx":
+        return load_xlsx(path)
     if suffix == ".docx":
         return load_docx(path)
 
