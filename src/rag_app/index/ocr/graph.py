@@ -7,7 +7,6 @@ from langchain_community.vectorstores.utils import filter_complex_metadata
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.factory.factory import build_chat_model, build_vstore
 from rag_app.index.ocr.config import IndexConfig
 from rag_app.index.ocr.loader import load
 from rag_app.index.ocr.mapping import map_to_docs
@@ -22,6 +21,7 @@ from rag_app.llm_enrichment.llm_enrichment import (
     gen_llm_structured_data_from_imgs,
     gen_llm_structured_data_from_texts,
 )
+from rag_app.providers.composition import build_chat_model, build_vstore
 from rag_app.utils.utils import make_chunk_id
 
 
