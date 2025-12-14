@@ -16,7 +16,10 @@ from rag_app.retrieval.state import (
     OutputRetrievalState,
     OverallRetrievalState,
 )
-from rag_app.utils.utils import extract_provider_and_model, get_provider_factory_from_config
+from rag_app.utils.utils import (
+    extract_provider_and_model,
+    get_provider_factory_from_config,
+)
 
 
 async def generate_questions(
