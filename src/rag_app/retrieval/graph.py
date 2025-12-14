@@ -6,10 +6,9 @@ from langchain_core.documents import Document
 from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnableConfig, ensure_config
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.providers.composition import get_provider_factory
 from rag_app.retrieval.config import RetrievalConfig
 from rag_app.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
 from rag_app.retrieval.state import (
@@ -17,6 +16,7 @@ from rag_app.retrieval.state import (
     OutputRetrievalState,
     OverallRetrievalState,
 )
+from rag_app.utils.utils import get_provider_factory_from_config
 
 
 async def generate_questions(
@@ -25,10 +25,7 @@ async def generate_questions(
     
     retrieval_config = RetrievalConfig.from_runnable_config(config)
     
-    ensured = ensure_config(config)
-    configurable = ensured.get("configurable", {}) or {}
-    provider_factory = get_provider_factory(configurable.get("provider_factory"))
-
+    provider_factory = get_provider_factory_from_config(config)
     model_name = retrieval_config.generate_questions_model
      
     number = retrieval_config.number_of_llm_generated_questions
@@ -62,9 +59,7 @@ async def retrieve_docs(
 ) -> dict[str, list[Document]]:
     retrieval_config = RetrievalConfig.from_runnable_config(config)
     
-    ensured = ensure_config(config)
-    configurable = ensured.get("configurable", {}) or {}
-    provider_factory = get_provider_factory(configurable.get("provider_factory"))
+    provider_factory = get_provider_factory_from_config(config)
     
     model_name = retrieval_config.embedding_model
     collection_name = retrieval_config.collection_id
@@ -118,9 +113,7 @@ async def compress_docs(
 ) -> dict[str, list[Document]]:
     retrieval_config = RetrievalConfig.from_runnable_config(config)
 
-    ensured = ensure_config(config)
-    configurable = ensured.get("configurable", {}) or {}
-    provider_factory = get_provider_factory(configurable.get("provider_factory"))
+    provider_factory = get_provider_factory_from_config(config)
 
     model_name = retrieval_config.compress_docs_model
     
@@ -188,9 +181,7 @@ async def generate_answer(
 
     retrieval_config = RetrievalConfig.from_runnable_config(config)
 
-    ensured = ensure_config(config)
-    configurable = ensured.get("configurable", {}) or {}
-    provider_factory = get_provider_factory(configurable.get("provider_factory"))
+    provider_factory = get_provider_factory_from_config(config)
 
     model_name = retrieval_config.generate_answer_model
     generate_answer_prompt = retrieval_config.generate_answer_prompt

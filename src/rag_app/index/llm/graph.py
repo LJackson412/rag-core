@@ -4,7 +4,7 @@ from typing import Any
 
 from langchain_community.vectorstores.utils import filter_complex_metadata
 from langchain_core.documents import Document
-from langchain_core.runnables import RunnableConfig, ensure_config
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
 from rag_app.index.llm.config import IndexConfig
@@ -25,8 +25,7 @@ from rag_app.index.llm.state import (
 )
 from rag_app.index.schema import LLMException
 from rag_app.llm_enrichment.llm_enrichment import gen_llm_structured_data_from_imgs
-from rag_app.providers.composition import get_provider_factory
-from rag_app.utils.utils import make_chunk_id
+from rag_app.utils.utils import get_provider_factory_from_config, make_chunk_id
 
 
 async def extract_metadata(
@@ -59,9 +58,7 @@ async def llm_extract(
 ) -> dict[str, Any]:
     index_config = IndexConfig.from_runnable_config(config)
     
-    ensured = ensure_config(config)
-    configurable = ensured.get("configurable", {}) or {}
-    provider_factory = get_provider_factory(configurable.get("provider_factory"))
+    provider_factory = get_provider_factory_from_config(config)
 
 
     model_name = index_config.extract_model
@@ -227,10 +224,7 @@ async def save(
 
     index_config = IndexConfig.from_runnable_config(config)
     
-    ensured = ensure_config(config)
-    configurable = ensured.get("configurable", {}) or {}
-    provider_factory = get_provider_factory(configurable.get("provider_factory"))
-
+    provider_factory = get_provider_factory_from_config(config)
 
     collection_name = index_config.collection_id
     model_name = index_config.embedding_model
