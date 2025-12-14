@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from rag_app.index.ocr.config import IndexConfig
 from rag_app.index.ocr.graph import graph as index_graph
 from rag_app.index.ocr.state import InputIndexState
-from rag_app.providers.composition import build_vstore
+from rag_app.providers.composition import get_provider_factory
 from rag_app.retrieval.graph import graph as retrieval_graph
 from rag_app.retrieval.state import InputRetrievalState
 
@@ -131,7 +131,10 @@ def create_config_and_input(case: list[dict[str, Any]]) -> Generator[IndexGraphD
         "retrieval_state": retrieval_state,
     }
     config = IndexConfig.from_runnable_config(index_config)
-    vstore = cast(Chroma, build_vstore(config.embedding_model, config.collection_id))
+    provider_factory = get_provider_factory()
+    vstore = cast(
+        Chroma, provider_factory.build_vstore(config.embedding_model, config.collection_id)
+    )
     vstore.delete_collection()
 
 

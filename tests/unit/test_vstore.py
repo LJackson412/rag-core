@@ -2,7 +2,7 @@ from typing import cast
 
 from langchain_core.runnables import RunnableConfig
 
-from rag_app.factory.factory import build_vstore
+from rag_app.providers.composition import get_provider_factory
 from rag_app.retrieval.config import RetrievalConfig
 from rag_app.utils.utils import pretty_print_docs
 
@@ -18,7 +18,10 @@ if __name__ == "__main__":
 
     index_config = RetrievalConfig.from_runnable_config(config)
 
-    vstore = build_vstore(index_config.embedding_model, index_config.collection_id)
+    provider_factory = get_provider_factory()
+    vstore = provider_factory.build_vstore(
+        index_config.embedding_model, index_config.collection_id
+    )
 
     k = vstore._collection.count()
 
