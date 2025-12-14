@@ -1,13 +1,14 @@
-from typing import Any, Generator, TypedDict
+from typing import Any, Generator, TypedDict, cast
 
 import pytest
+from langchain_chroma import Chroma
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-from rag_app.factory.factory import build_vstore
 from rag_app.index.ocr.config import IndexConfig
 from rag_app.index.ocr.graph import graph as index_graph
 from rag_app.index.ocr.state import InputIndexState
+from rag_app.providers.composition import build_vstore
 from rag_app.retrieval.graph import graph as retrieval_graph
 from rag_app.retrieval.state import InputRetrievalState
 
@@ -130,7 +131,7 @@ def create_config_and_input(case: list[dict[str, Any]]) -> Generator[IndexGraphD
         "retrieval_state": retrieval_state,
     }
     config = IndexConfig.from_runnable_config(index_config)
-    vstore = build_vstore(config.embedding_model, config.collection_id)
+    vstore = cast(Chroma, build_vstore(config.embedding_model, config.collection_id))
     vstore.delete_collection()
 
 

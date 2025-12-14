@@ -6,10 +6,14 @@ from langchain_core.documents import Document
 from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables import RunnableConfig, ensure_config
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.providers.composition import build_chat_model, build_vstore
+from rag_app.providers.composition import (
+    build_chat_model,
+    build_vstore,
+    get_provider_factory,
+)
 from rag_app.retrieval.config import RetrievalConfig
 from rag_app.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
 from rag_app.retrieval.state import (
@@ -22,15 +26,21 @@ from rag_app.retrieval.state import (
 async def generate_questions(
     state: OverallRetrievalState, config: RunnableConfig
 ) -> dict[str, list[str]]:
+    
     retrieval_config = RetrievalConfig.from_runnable_config(config)
+    
+    ensured = ensure_config(config)
+    configurable = ensured.get("configurable", {}) or {}
+    provider_factory = get_provider_factory(configurable.get("provider_factory"))
+
     number = retrieval_config.number_of_llm_generated_questions
     generate_questions_model = retrieval_config.generate_questions_model
     user_question = state.messages[-1].content
 
-    structured_llm = build_chat_model(
+    structured_llm = provider_factory.build_chat_model(
         model_name=generate_questions_model, temp=0.3  # for semantic relevant questions
     ).with_structured_output(LLMQuestions)
-
+    
     generate_questions_prompt = retrieval_config.generate_questions_prompt
 
     prompt = PromptTemplate(
