@@ -9,14 +9,14 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.retrieval.config import RetrievalConfig
-from rag_app.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
-from rag_app.retrieval.state import (
+from rag_core.retrieval.config import RetrievalConfig
+from rag_core.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
+from rag_core.retrieval.state import (
     InputRetrievalState,
     OutputRetrievalState,
     OverallRetrievalState,
 )
-from rag_app.utils.utils import (
+from rag_core.utils.utils import (
     extract_provider_and_model,
     get_provider_factory_from_config,
 )

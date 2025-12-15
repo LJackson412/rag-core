@@ -4,7 +4,7 @@ from collections.abc import Iterable, Sequence
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig, ensure_config
 
-from rag_app.providers.composition import ProviderFactory, get_provider_factory
+from rag_core.providers.composition import ProviderFactory, get_provider_factory
 
 DocOrScoredDoc = Document | tuple[Document, float]
 

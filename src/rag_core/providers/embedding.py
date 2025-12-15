@@ -1,7 +1,7 @@
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
-from rag_app.config.settings import settings
+from rag_core.config.settings import settings
 
 
 def get_openai_embedding(

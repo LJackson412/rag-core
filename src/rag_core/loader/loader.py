@@ -10,7 +10,7 @@ from unstructured.partition.image import partition_image
 from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.xlsx import partition_xlsx
 
-from rag_app.loader.schema import Segment
+from rag_core.loader.schema import Segment
 
 #TODO: Refactor to reduce code duplication between loaders
 

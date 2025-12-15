@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.retrieval.prompts import (
+from rag_core.retrieval.prompts import (
     COMPRESS_DOCS_PROMPT,
     GENERATE_ANSWER_PROMPT,
     GENERATE_QUESTIONS_PROMPT,

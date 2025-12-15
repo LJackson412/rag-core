@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from rag_app.index.schema import LLMException, LLMMetaData
+from rag_core.index.schema import LLMException, LLMMetaData
 
 
 @dataclass(slots=True)

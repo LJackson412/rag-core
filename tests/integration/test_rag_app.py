@@ -5,12 +5,12 @@ from langchain_chroma import Chroma
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
-from rag_app.index.ocr.config import IndexConfig
-from rag_app.index.ocr.graph import graph as index_graph
-from rag_app.index.ocr.state import InputIndexState
-from rag_app.retrieval.graph import graph as retrieval_graph
-from rag_app.retrieval.state import InputRetrievalState
-from rag_app.utils.utils import (
+from rag_core.index.config import IndexConfig
+from rag_core.index.graph import graph as index_graph
+from rag_core.index.state import InputIndexState
+from rag_core.retrieval.graph import graph as retrieval_graph
+from rag_core.retrieval.state import InputRetrievalState
+from rag_core.utils.utils import (
     extract_provider_and_model,
     get_provider_factory_from_config,
 )
@@ -150,7 +150,14 @@ def create_config_and_input(case: list[dict[str, Any]]) -> Generator[IndexGraphD
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("case", CASES, ids=["pdf-default", "pdf-mode-none", "csv-default"])
+@pytest.mark.parametrize("case", CASES,   ids=[
+        "pdf-default",
+        "pdf-mode-none",
+        "csv-default",
+        "docx-default",
+        "xlsx-default",
+    ],
+)
 async def test_index_graph(create_config_and_input: IndexGraphData) -> None:
     data = create_config_and_input
 

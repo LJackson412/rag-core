@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from langchain_core.documents import Document
 
-from rag_app.loader.schema import Segment
+from rag_core.loader.schema import Segment
 
 
 def map_to_docs(data: Sequence[Segment]) -> list[Document]:

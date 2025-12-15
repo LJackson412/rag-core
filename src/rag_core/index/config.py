@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.index.prompts import GEN_METADATA_PROMPT
+from rag_core.index.prompts import GEN_METADATA_PROMPT
 
 T = TypeVar("T", bound="IndexConfig")
 

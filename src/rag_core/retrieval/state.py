@@ -5,7 +5,7 @@ from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
-from rag_app.retrieval.schema import LLMAnswer
+from rag_core.retrieval.schema import LLMAnswer
 
 MessagesState = Annotated[list[AnyMessage], add_messages]
 

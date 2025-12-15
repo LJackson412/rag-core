@@ -2,7 +2,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_openai import ChatOpenAI
 
-from rag_app.config.settings import settings
+from rag_core.config.settings import settings
 
 
 def get_openai_chat_model(

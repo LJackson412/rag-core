@@ -1,4 +1,4 @@
-# RAG App
+# RAG-Core
 
 A modular **Retrieval-Augmented Generation (RAG)** stack with an OCR-based indexing pipeline and a two-stage retrieval process with LLM compression. The setup is designed for fast experimentation and uses **LangGraph/LangChain** and a **Chroma** vector store. All model and storage providers are interchangeable.
 

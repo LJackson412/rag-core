@@ -7,9 +7,9 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_core.vectorstores import VectorStore
 
-from rag_app.providers.chat_model import get_chat_model
-from rag_app.providers.embedding import get_embedding
-from rag_app.providers.vstore import get_vstore
+from rag_core.providers.chat_model import get_chat_model
+from rag_core.providers.embedding import get_embedding
+from rag_core.providers.vstore import get_vstore
 
 _DEFAULT_RATE_LIMITER = InMemoryRateLimiter()
 
