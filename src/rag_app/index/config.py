@@ -5,7 +5,7 @@ from typing import Annotated, Literal, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
 
-from rag_app.index.llm.prompts import EXTRACT_DATA_FROM_PDF_PROMPT
+from rag_app.index.prompts import GEN_METADATA_PROMPT
 
 T = TypeVar("T", bound="IndexConfig")
 
@@ -48,19 +48,48 @@ class IndexConfig(BaseModel):
             },
         ),
     ]
-    extract_model: Annotated[
+    mode: Annotated[
+        Literal["none", "all", "imgs", "tables", "texts"],
+        Field(
+            default="all",
+            description=(
+                "Use 'imgs' to enrich only image segments while other content is saved without LLM enrichment."
+            ),
+        ),
+    ]
+    # ------------------------------------------------------------------------
+
+    gen_metadata_model: Annotated[
         Literal["openai/gpt-4.1", "openai/gpt-4.1-mini"],
         Field(
             default="openai/gpt-4.1",
             description=(
-                "Multimodal model for PDF extraction"
-                "Extract and splits the page content and metadata from each PDF page as Image"
+                "Model for metadata enrichment across text, image and table segments "
+                "Generates metadata for better retrieval quality "
+                "As an example, a retrieval_summary is formed, which is used to retrieve this segment"
             ),
             json_schema_extra={
-                "langgraph_nodes": ["extract"],
+                "langgraph_nodes": [
+                    "extract_text",
+                    "extract_imgs",
+                    "extract_tables",
+                ],
             },
         ),
     ]
+    gen_metadata_prompt: str = Field(
+        default=GEN_METADATA_PROMPT,
+        description="System prompt for generating metadata",
+        json_schema_extra={
+            "langgraph_nodes": ["extract_text"],
+            "langgraph_type": "prompt",
+        },
+    )
+    splitter_seperators: list[str] = Field(
+        default=["\n\n", "\n", " ", ""],
+        description="Sepearatos for recursive text splitting",
+        json_schema_extra={"langgraph_nodes": ["extract_text"]},
+    )
     vstore: Annotated[
         Literal["chroma"],
         Field(
@@ -71,14 +100,12 @@ class IndexConfig(BaseModel):
             },
         ),
     ]
-    extract_data_prompt: str = Field(
-        default=EXTRACT_DATA_FROM_PDF_PROMPT,
-        description="System prompt for generating extraction and splitting",
-        json_schema_extra={
-            "langgraph_nodes": ["extract_node"],
-            "langgraph_type": "prompt",
-        },
+    splitter_chunk_size: int = Field(
+        default=900,
+        description="Chunk Size for recursive text splitting",
+        json_schema_extra={"langgraph_nodes": ["extract_text"]},
     )
+    # ------------------------------------------------------------------------
 
     @classmethod
     def from_runnable_config(cls: type[T], config: RunnableConfig | None = None) -> T:

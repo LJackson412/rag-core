@@ -7,20 +7,20 @@ from langchain_community.vectorstores.utils import filter_complex_metadata
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
-from rag_app.index.ocr.config import IndexConfig
-from rag_app.index.ocr.loader import load
-from rag_app.index.ocr.mapping import map_to_docs
-from rag_app.index.ocr.schema import Segment
-from rag_app.index.ocr.state import (
+from rag_app.index.config import IndexConfig
+from rag_app.index.mapping import map_to_docs
+from rag_app.index.schema import LLMException, LLMMetaData
+from rag_app.index.state import (
     InputIndexState,
     OutputIndexState,
     OverallIndexState,
 )
-from rag_app.index.schema import LLMException, LLMMetaData
 from rag_app.llm_enrichment.llm_enrichment import (
     gen_llm_structured_data_from_imgs,
     gen_llm_structured_data_from_texts,
 )
+from rag_app.loader.loader import load
+from rag_app.loader.schema import Segment
 from rag_app.utils.utils import (
     extract_provider_and_model,
     get_provider_factory_from_config,
