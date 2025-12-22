@@ -5,8 +5,6 @@ from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
-from rag_core.retrieval.schema import LLMAnswer
-
 MessagesState = Annotated[list[AnyMessage], add_messages]
 
 
@@ -47,12 +45,12 @@ class OutputRetrievalState(BaseModel):
         ),
     ]
     llm_answer: Annotated[
-        LLMAnswer | None,
+        BaseModel | None,
         Field(
             default=None,
             description=(
-                "Structured answer produced by the generate_answer node. Contains the natural-language response, supporting "
-                "quote, and the chunk_ids cited as evidence."
+                "Structured answer produced by the generate_answer node. Defaults to LLMAnswer unless a custom schema is "
+                "configured. Contains the natural-language response, supporting quote, and the chunk_ids cited as evidence."
             ),
         ),
     ]
