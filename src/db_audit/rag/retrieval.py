@@ -2,6 +2,7 @@ import asyncio
 
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
+from pydantic import BaseModel
 
 from rag_core.retrieval.graph import graph as retrieval_graph
 from rag_core.retrieval.prompts import (
@@ -24,6 +25,7 @@ async def retrieve_docs(
     number_of_llm_generated_questions: int = 3,
     include_original_question: bool = True,
     number_of_docs_to_retrieve: int = 10,
+    generate_answer_schema: type[BaseModel] | None = None,
 ) -> list[OutputRetrievalState]:
     """
     - Dursuchen einer Collection nach relevanten Dokumenten basierend auf mehreren Abfragen
@@ -37,7 +39,8 @@ async def retrieve_docs(
             "generate_answer_prompt": generate_answer_prompt,
             "number_of_llm_generated_questions": number_of_llm_generated_questions,
             "include_original_question": include_original_question,
-            "number_of_docs_to_retrieve": number_of_docs_to_retrieve
+            "number_of_docs_to_retrieve": number_of_docs_to_retrieve,
+            "generate_answer_schema": generate_answer_schema
         },
     )
     

@@ -8,6 +8,7 @@ import asyncio
 from typing import Literal
 
 from db_audit.audits.prompts import AUDIT_PROMPT
+from db_audit.audits.schema import AuditResult
 from db_audit.rag.index import index_files
 from db_audit.rag.retrieval import retrieve_docs
 
@@ -33,7 +34,8 @@ async def audit(
         collection_id=workitem_element_id,
         queries=reqs,
         number_of_docs_to_retrieve = 38, # 4 x 38,
-        generate_answer_prompt=AUDIT_PROMPT
+        generate_answer_prompt=AUDIT_PROMPT,
+        generate_answer_schema=AuditResult
     )
     
 async def main() -> None:

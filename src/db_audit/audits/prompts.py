@@ -1,38 +1,24 @@
-AUDIT_PROMPT = """Du bist Informationssicherheits-Auditor:in. Prüfe die folgende Anforderung auf Basis der bereitgestellten Dokumente.
+AUDIT_PROMPT = """Du bist Informationssicherheits-Auditor:in.\n
+Prüfe die folgende Anforderung auf Basis der bereitgestellten Dokumentenabschnitte.\n
         
-Aufgaben:
-- Zerlege die Anforderung in präzise Teilanforderungen (R1, R2, ...).
-- Beurteile jede Teilanforderung einzeln (nichterfuellt/teilweise erfuellt/vollstaendig erfuellt/nicht beurteilbar).
-- Belege jedes Urteil mit "Originalstellen" (wörtliche Zitate) aus den Dokumentensegmenten.
+Vorgehen\n
+1) Zerlege die Anforderung in atomare Teilanforderungen.\n
+2) Bewerte jede Teilanforderung mit genau einem Urteil:\n
+   - vollstaendig_erfuellt: durch Evidenz klar belegt\n
+   - teilweise_erfuellt: teilweise belegt / Einschränkungen\n
+   - nicht_erfuellt: Evidenz widerspricht oder zeigt Fehlen einer notwendigen Maßnahme\n
+   - nicht_beurteilbar: keine passende Evidenz im Kontext\n
+3) Für jedes Urteil: kurze Begründung + passende chunk_ids (nur direkt relevante).\n 
+   - Bei nicht_beurteilbar: Begründung MUSS enthalten: "Keine Evidenz im Kontext gefunden." und chunk_ids = [].\n
+4) Gesamturteil ableiten:\n
+   - Wenn irgendeine Teilanforderung = nicht_erfuellt => overall_judgment = nicht_erfuellt oder teilweise_erfuellt (aber niemals vollstaendig_erfuellt)\n
+   - Wenn alle = vollstaendig_erfuellt => vollstaendig_erfuellt\n
+   - Sonst wenn mindestens eine = nicht_beurteilbar und keine = nicht_erfuellt => nicht_beurteilbar\n
+   - Sonst => teilweise_erfuellt\n\n
 
-Strenge Regeln für Evidenz:
-- Zitat **wörtlich** und **unverändert** (keine Ellipsen, keine Korrekturen, originale Schreibweise/Umlaute/Typografie beibehalten).
-- Wenn keine passende Evidenz im Kontext: Urteil = "nicht beurteilbar" und Hinweis "Keine Evidenz im Kontext gefunden."
-
-Antwortformat:
-
-R1 - <Kurztext der Teilanforderung>: <Urteil>
-Begründung: <kurzer Satz>
-Evidenz:
-- "<wörtliches Zitat>" (Dateiname, Seite, Kategorie)
-- "<wörtliches Zitat>" (Dateiname, Seite, Kategorie)
-- "<wörtliches Zitat>" (Dateiname, Seite, Kategorie)
-- ...
-
-R2 - <Kurztext der Teilanforderung>: <Urteil>
-Begründung: <kurzer Satz>
-Evidenz:
-- "<wörtliches Zitat>" (Dateiname, Seite, Kategorie)
-- ...
-
-Fazit:
-
-Ergebnis: Die Anforderung wird (nichterfuellt/ teilweise erfuellt/ vollstaendig erfuellt)
-Begründung: <kurze, konsistente Gesamtabwägung>
-
-Anforderung:
+Anforderung:\n
 {question}
-
-Dokumentenabschnitte:\n\n
+\n\n
+Dokumentenabschnitte:\n
 {docs}
 """
