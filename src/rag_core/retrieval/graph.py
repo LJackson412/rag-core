@@ -8,9 +8,10 @@ from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel
 
 from rag_core.retrieval.config import RetrievalConfig
-from rag_core.retrieval.schema import LLMAnswer, LLMDecision, LLMQuestions
+from rag_core.retrieval.schema import LLMDecision, LLMQuestions
 from rag_core.retrieval.state import (
     InputRetrievalState,
     OutputRetrievalState,
@@ -193,7 +194,7 @@ async def compress_docs(
 
 async def generate_answer(
     state: OverallRetrievalState, config: RunnableConfig
-) -> dict[str, LLMAnswer | list[Document]]:
+) -> dict[str, BaseModel | list[Document]]:
 
     retrieval_config = RetrievalConfig.from_runnable_config(config)
 
@@ -205,9 +206,10 @@ async def generate_answer(
     generate_answer_prompt = retrieval_config.generate_answer_prompt
     user_question = cast(str, state.messages[-1].content)
 
+    answer_schema = retrieval_config.generate_answer_schema
     structured_llm = provider_factory.build_chat_model(
         provider=generate_answer_provider, model_name=model_name
-    ).with_structured_output(LLMAnswer)
+    ).with_structured_output(answer_schema)
 
     def _doc_text_for_prompt(doc: Document) -> str:
         cat = doc.metadata.get("category")
@@ -270,9 +272,9 @@ async def generate_answer(
     llm_input = _build_user_message(prompt, filtered_docs)
 
     # TODO: reduce llm input to match model context size
-    llm_answer = cast(LLMAnswer, await structured_llm.ainvoke([llm_input]))
+    llm_answer = cast(BaseModel, await structured_llm.ainvoke([llm_input]))
 
-    chunk_ids = set(llm_answer.chunk_ids or [])
+    chunk_ids = set(getattr(llm_answer, "chunk_ids", None) or [])
     llm_evidence_docs = [
         doc for doc in filtered_docs if doc.metadata.get("id") in chunk_ids
     ]

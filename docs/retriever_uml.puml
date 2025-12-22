@@ -28,6 +28,7 @@ start
         - compress_docs_prompt
         - generate_answer_model
         - generate_answer_prompt
+        - generate_answer_schema
     end note
 
 
@@ -86,7 +87,7 @@ repeat while (Weiteres Dokument?) is (Ja) not (Nein)
 partition "generate_answer" {
 
 :Prepare prompt with question + filtered_docs;
-:LLM (generate_answer_model) returns LLMAnswer + raw AIMessage;
+:LLM (generate_answer_model) returns configured answer schema (default: LLMAnswer) + raw AIMessage;
 :Select llm_evidence_docs by chunk_id;
 :Add messages, llm_answer, llm_evidence_docs to state;
     note left

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal, TypeVar
+from typing import Annotated, Literal, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
@@ -10,6 +10,7 @@ from rag_core.retrieval.prompts import (
     GENERATE_ANSWER_PROMPT,
     GENERATE_QUESTIONS_PROMPT,
 )
+from rag_core.retrieval.schema import LLMAnswer
 
 T = TypeVar("T", bound="RetrievalConfig")
 
@@ -167,6 +168,19 @@ class RetrievalConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
+    generate_answer_schema: Annotated[
+        Type[BaseModel],
+        Field(
+            default=LLMAnswer,
+            description=(
+                "Pydantic schema used to structure the final answer output. "
+                "Defaults to LLMAnswer when no custom schema is provided."
+            ),
+            json_schema_extra={
+                "langgraph_nodes": ["generate_answer"],
+            },
+        ),
+    ]
 
     @classmethod
     def from_runnable_config(cls: type[T], config: RunnableConfig | None = None) -> T:
