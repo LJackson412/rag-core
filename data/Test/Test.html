@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Abteilungsmaßnahme: Regelmäßige Berechtigungsüberprüfung (Fachbereich Digital Sales)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --fg:#1f2937; --muted:#6b7280; --accent:#2563eb; --bg:#ffffff; --soft:#f3f4f6; }
+    html,body { margin:0; padding:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif; color:var(--fg); background:var(--bg); }
+    header { border-bottom:1px solid #e5e7eb; background:#fff; }
+    .container { max-width:1000px; margin:0 auto; padding:24px; }
+    h1 { margin:0.2em 0 0.1em; font-size:1.8rem; }
+    h2 { margin-top:2rem; font-size:1.3rem; border-bottom:2px solid var(--soft); padding-bottom:0.3rem; }
+    h3 { margin-top:1.2rem; font-size:1.1rem; }
+    p, li { line-height:1.55; }
+    .meta { font-size:0.9rem; color:var(--muted); display:flex; gap:1rem; flex-wrap:wrap; }
+    .badge { display:inline-block; padding:0.2rem 0.5rem; border-radius:999px; background:var(--soft); font-size:0.85rem; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    table { width:100%; border-collapse:collapse; font-size:0.95rem; margin:0.5rem 0 1rem; }
+    th, td { border:1px solid #e5e7eb; padding:8px; vertical-align:top; }
+    th { background:#f9fafb; text-align:left; }
+    caption { text-align:left; font-weight:600; margin:0.5rem 0; color:var(--muted); }
+    .callout { background:#eef2ff; border-left:4px solid var(--accent); padding:12px 14px; margin:12px 0; }
+    aside.small { font-size:0.9rem; color:var(--muted); }
+    code { background:#f3f4f6; padding:0.1rem 0.25rem; border-radius:4px; }
+    figure { background:#f9fafb; border:1px dashed #e5e7eb; padding:12px; }
+    figcaption { font-size:0.9rem; color:var(--muted); margin-bottom:6px; }
+    .footer { margin-top:3rem; font-size:0.9rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="meta">
+        <span class="badge">Intern · Vertraulich</span>
+        <span>Dokument-Nr.: DS-IGP-PR-014</span>
+        <span>Version: 1.3</span>
+        <span>Gültig ab: 2025-04-01</span>
+        <span>Eigentümer: Fachbereich Digital Sales (FDS), FictaBank AG</span>
+      </div>
+      <h1>Maßnahme: Regelmäßige Berechtigungsüberprüfung in FDS</h1>
+      <p>Dieses Dokument beschreibt die abteilungsinterne Maßnahme zur risikobasierten Überprüfung von Zugriffsberechtigungen in den Kernanwendungen des Fachbereichs Digital Sales (FDS). Ziel ist die Reduktion des Risikos unberechtigter Datenzugriffe und fehlerhafter Transaktionen durch veraltete Rollen und Rechte.</p>
+      <!-- nicht relevant: Kopfbereich dient der Orientierung und ist kein Prüfmerkmal -->
+    </div>
+  </header>
+
+  <main class="container">
+
+    <h2>1 Zweck und Geltungsbereich</h2>
+    <p>Die Maßnahme regelt, wie FDS Zugriffsberechtigungen für in- und externe Mitarbeitende in den Anwendungen <em>CRM-SalesPro</em>, <em>DataLake-X</em>, <em>SFTP-Marketing</em> und <em>SAP BW</em> regelmäßig überprüft, freigibt oder entzieht. Sie gilt für alle FDS-Teams, inklusive befristet Beschäftigte, Werkstudierende und Lieferantenpersonal, soweit diese über FDS verantwortete Rollen verfügen.</p>
+    <p>Die Maßnahme nutzt die zentrale Identity-Governance-Plattform (IGP „Keystone“) für Review-Kampagnen und das Service-Management-System (SMS „ServiceDeskOne“) für Änderungsaufträge. Schnittstellen zu HR („PeopleCore“) und Vendor-Management („ThirdPartyHub“) liefern Stammdaten.</p>
+    <!-- nicht relevant: Abschnitt ist einleitend und dient der Kontextsetzung -->
+
+    <h2>2 Risikobeschreibung & Ziel der Maßnahme</h2>
+    <div class="callout">
+      <strong>Risikothese:</strong> Veraltete Berechtigungen (z. B. nach Rollenwechsel oder Vertragsende) können zum unautorisierten Zugriff auf Kundendaten und Finanzkennzahlen führen und regulatorische Meldepflichten auslösen.
+    </div>
+    <p><strong>Zielbild:</strong> FDS stellt sicher, dass Berechtigungen aktuell, zweckgebunden und minimal sind (<em>need-to-know</em>). Dies erfolgt durch halbjährliche Review-Kampagnen, anlassbezogene Prüfungen bei Personalveränderungen sowie dokumentierte Anpassungen im SMS.</p>
+    <!-- nicht relevant -->
+
+    <h2>3 Rollen & Verantwortlichkeiten</h2>
+    <p>Die folgenden Rollen sind in IGP hinterlegt und im Delegationsregister (FDS-DELEG-List) mit Vertreterregelung dokumentiert.</p>
+    <div class="grid">
+      <div>
+        <table>
+          <caption>Rollenbeschreibung (Auszug)</caption>
+          <thead>
+            <tr><th>Rolle</th><th>Verantwortung</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FDS-Anwendungs­verantwortliche (AV)</td>
+              <td>Starten und Freigeben der Review-Kampagnen pro Anwendung; finale Entscheidung über Entzug/Sperre; fachliche Eignungsprüfung anhand Aufgabenprofil.</td>
+            </tr>
+            <tr>
+              <td>Teamleads (TL)</td>
+              <td>Erstprüfung der Berechtigungen der Teammitglieder, Bestätigung der Arbeitsaufgaben und Projektzuordnungen; Meldung von Abwesenheiten & Rollenwechseln.</td>
+            </tr>
+            <tr>
+              <td>IGP-Kampagnen­koordinator:in (FDS-GRC)</td>
+              <td>Konfiguration der Kampagnen, Fristenmanagement, KPI-Reporting, Eskalation bei Fristüberschreitung.</td>
+            </tr>
+            <tr>
+              <td>ServiceDeskOne Change-Manager:in</td>
+              <td>Technische Umsetzung der genehmigten Änderungen, Vier-Augen-Freigabe, Ticket-Verknüpfung zur Kampagne.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="small">
+        <strong>Delegationsprinzip:</strong> Nur von FDS-Leitung autorisierte AV/TL dürfen Reviews durchführen. Vertretungen sind namentlich benannt und zeitlich befristet (Urlaub, Krankheit). Schulung „IGP Reviewer Basics“ ist verpflichtend.
+      </aside>
+    </div>
+    <!-- Control: 062-020 — erfüllt.
+         Begründung: Die Überprüfung erfolgt durch hierzu autorisierte Personen aus den Unternehmensbereichen (AV/TL), die aufgrund ihres Fachwissens über Zuständigkeiten (Aufgabenprofile, Projektzuordnung, Datensensitivität) die Angemessenheit beurteilen können.
+         Nachweise: (1) Delegationsregister FDS-DELEG-List (mit Freigabe durch FDS-Leitung), (2) Schulungsnachweis „IGP Reviewer Basics“, (3) IGP-Rollenmapping von Anwendungen zu AV/TL. Die Kombination aus formaler Autorisierung + nachweisbarer Schulung + fachlicher Nähe erfüllt die Control-Anforderung vollständig. -->
+
+    <h2>4 Prozessbeschreibung der Berechtigungsüberprüfung</h2>
+    <h3>4.1 Ereignisgetriebene Prüfungen (Joiner/Mover/Leaver)</h3>
+    <p>IGP erhält wöchentlich Stammdaten aus PeopleCore (Mitarbeiterstatus, Organisationseinheit, TL-Zuweisung). Bei <em>Leaver</em> wird automatisch eine Sofortsperre generiert; bei <em>Mover</em> wird eine anlassbezogene Einzelprüfung an den zuständigen TL ausgelöst. Lieferantenstatus wird monatlich aus ThirdPartyHub importiert.</p>
+
+    <h3>4.2 Regelmäßige Review-Kampagnen</h3>
+    <p>FDS führt halbjährlich (April & Oktober) kampagnenbasierte Reviews in IGP durch. AV und TL prüfen für jede betroffene Person die Zweckbindung, Rollen-Minimalität und Projektlaufzeiten. Entscheidungen (<em>Bestätigen</em>, <em>Entziehen</em>, <em>Ändern</em>) werden direkt in IGP erfasst; erforderliche Änderungen werden automatisiert als Tickets in ServiceDeskOne erstellt.</p>
+
+    <h3>4.3 Fristen, Eskalation, Qualitätssicherung</h3>
+    <ul>
+      <li>Frist: 15 Arbeitstage je Kampagne; automatische Erinnerungen nach 5/10 Tagen; Eskalation an FDS-Leitung ab Tag 12.</li>
+      <li>Stichprobe (GRC): 5 % der „Bestätigt“-Entscheidungen werden gegen Aufgabenprofile und Projektverträge quergeprüft.</li>
+      <li>Abwesenheiten: TL-Vertretungen sind verpflichtet, offene Positionen im Review zu übernehmen.</li>
+    </ul>
+
+    <!-- Control: 062-010 — teilweise erfüllt.
+         Begründung (erfüllte Teile): Die Control fordert mind. jährliche Überprüfung und zeitnahe Anpassung bei Änderungen. FDS übererfüllt die Frequenz mit halbjährlichen Kampagnen (April/Oktober) und setzt bei Leaver/Mover wöchentliche Ereignisprüfungen um. Damit ist der Aspekt „mindestens jährlich“ abgedeckt und in Teilen übertroffen.
+         Begründung (nicht erfüllte Teile): „Zeitnahe Anpassung“ ist für zwei Fälle nicht zuverlässig gewährleistet:
+           (a) Externe Mitarbeitende: ThirdPartyHub liefert nur monatliche Statusupdates (kein tagesaktueller End-of-Contract-Trigger). Zwischen Vertragsende und dem nächsten Import können bis zu 30 Tage liegen, in denen Berechtigungen nicht automatisch entzogen werden. FDS kompensiert dies nur durch TL-Meldepflicht (manuell), was erfahrungsgemäß nicht lückenlos ist.
+           (b) Längere Abwesenheiten (Sabbatical/Elternzeit): PeopleCore kennzeichnet diese Abwesenheiten, aber die IGP-Schnittstelle übernimmt das Feld „Langzeitabwesenheit“ noch nicht. Eine temporäre Entziehung erfolgt daher nicht systemgestützt, sondern erst im Halbjahres-Review oder bei proaktiver TL-Meldung. 
+         Schlussfolgerung: Die jährliche Überprüfung ist erfüllt; die geforderte zeitnahe Anpassung bei bestimmten Beschäftigungsänderungen (insb. externe End-of-Contract & Langzeitabwesenheit) ist nur teilweise umgesetzt. Daher Gesamtstatus: teilweise erfüllt. -->
+
+    <h2>5 Nachweise, Protokollierung & Aufbewahrung</h2>
+    <p>Alle Review-Entscheidungen werden in IGP mit Zeitstempel, Entscheider:in, Begründung und betroffenen Rollen protokolliert. IGP übergibt eine unveränderbare Kampagnen-Zusammenfassung (<em>Campaign Evidence PDF</em>) an das DMS. Jede Änderung (Entzug/Änderung) erzeugt ein verknüpftes SMS-Ticket mit Umsetzung, Vier-Augen-Freigabe und Abschlussprotokoll.</p>
+    <table>
+      <caption>Aufbewahrungs- & Nachweisregeln</caption>
+      <thead>
+        <tr><th>Nachweis</th><th>System</th><th>Inhalt</th><th>Aufbewahrung</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>IGP Kampagnen-Log</td>
+          <td>IGP „Keystone“</td>
+          <td>Reviewer, Entscheidungen, Zeitstempel, Änderungsbegründungen</td>
+          <td>3 Jahre (unveränderbar, revisionssicher exportiert ins DMS)</td>
+        </tr>
+        <tr>
+          <td>Änderungstickets</td>
+          <td>ServiceDeskOne</td>
+          <td>Request, Genehmigungen, Umsetzung, Vier-Augen-Freigabe, Abschluss</td>
+          <td>3 Jahre (Verknüpfung zur Kampagne)</td>
+        </tr>
+        <tr>
+          <td>Stichprobenberichte</td>
+          <td>Confluence</td>
+          <td>5 %-Sample, Prüfnotizen, Abweichungen & Korrekturmaßnahmen</td>
+          <td>3 Jahre</td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Control: 062-030 — erfüllt.
+         Begründung: Die Control verlangt nachvollziehbare Dokumentation der Überprüfung und der daraus resultierenden Anpassungen. 
+         Umsetzung: (1) IGP zeichnet jede Entscheidung mit Person/Begründung/Zeitstempel auf; (2) für Änderungen existieren zugeordnete SMS-Tickets mit Umsetzung & Vier-Augen-Freigabe; (3) Kampagnen-PDF und Ticket-Historie sind verknüpft und revisionssicher im DMS/ServiceDesk gespeichert; (4) definierte Aufbewahrungsfristen (3 Jahre). 
+         Bewertung: Vollständige, durchgängige Nachvollziehbarkeit von Review -> Entscheidung -> Umsetzung -> Abschluss ist gegeben. Damit vollständige Erfüllung. -->
+
+    <h2>6 Abgrenzung: Administrative Berechtigungen</h2>
+    <p>Diese Maßnahme umfasst ausschließlich fachliche Rollen (z. B. <em>CRM_READ</em>, <em>DLX_MARKETING_ANALYST</em>). Administrative Berechtigungen (<em>CRM-SP-ADMIN</em>, <em>DLX-ADMIN</em>, <em>SAP_BASIS_ADMIN</em>) werden derzeit <strong>nicht</strong> im Rahmen der FDS-Kampagnen geprüft. Für diese Gruppen ist die zentrale IT (CIO-Bereich) verantwortlich; ein abgestimmtes, mindestens jährliches Review über Systemowner und IT-Security ist in Arbeit (CIO-Projekt „ADMIN-GOV-2025“, geplante Inbetriebnahme Q4/2025).</p>
+    <div class="callout"><strong>Bekannte Lücke:</strong> FDS erhält bisher keine Bestätigung über die erfolgten Admin-Reviews der zentralen IT; es existiert auch kein Abgleich zwischen FDS-Personalliste und Admin-Gruppen.</div>
+    <!-- Control: 062-040 — nicht erfüllt.
+         Begründung: Die Control fordert regelmäßige (mind. jährliche) Überprüfung administrativer Berechtigungen. 
+         FDS-Ist: Admin-Rollen werden explizit aus dem Geltungsbereich dieser Maßnahme ausgenommen. Weder führt FDS eine eigene Admin-Review durch, noch liegen FDS strukturierte Nachweise der zentralen IT über diese Prüfungen vor. 
+         Abhängigkeit: CIO-Projekt „ADMIN-GOV-2025“ ist geplant, jedoch noch nicht produktiv. 
+         Schluss: Mangels Durchführung/Nachweis in FDS-Verantwortung gilt die Control hier als nicht erfüllt. -->
+
+    <h2>7 Metriken & Steuerung</h2>
+    <table>
+      <caption>KPIs letzte Kampagne (Oktober 2024)</caption>
+      <thead><tr><th>KPI</th><th>Wert</th><th>Ziel</th><th>Anmerkung</th></tr></thead>
+      <tbody>
+        <tr><td>Fristgerecht abgeschlossen</td><td>97 %</td><td>≥ 95 %</td><td>3 verspätete Teams, Eskalation an FDS-Leitung</td></tr>
+        <tr><td>Anteil Entzüge/Änderungen</td><td>11 %</td><td>—</td><td>Hinweis auf Bereinigungsbedarf, kein Alarmwert</td></tr>
+        <tr><td>Stichproben-Beanstandungen</td><td>2 Fälle</td><td>0</td><td>Beide Fälle externes Personal mit abgelaufenem SOW</td></tr>
+      </tbody>
+    </table>
+    <!-- nicht relevant: KPIs sind hilfreich für Steuerung, aber kein direkter Nachweis für die konkrete Control-Erfüllung -->
+
+    <h2>8 Review-Zusammenfassung (Datenauszug)</h2>
+    <table>
+      <caption>Auszug Kampagne „FDS-Q4-2024“</caption>
+      <thead>
+        <tr>
+          <th>Benutzer</th><th>Typ</th><th>Team</th><th>System/Rolle</th><th>Entscheidung</th><th>Begründung (Kurz)</th><th>IGP-Zeitstempel</th><th>Ticket-ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anna Schmidt</td><td>Intern</td><td>Performance Marketing</td><td>DataLake-X / DLX_MARKETING_ANALYST</td><td>Bestätigt</td><td>Aktives Projekt „Attribution 2.0“</td><td>2024-10-07 10:14</td><td>SDO-124558</td>
+        </tr>
+        <tr>
+          <td>Ben Müller</td><td>Extern (Lieferant)</td><td>CRM Ops</td><td>CRM-SalesPro / CRM_EDIT</td><td>Entzogen</td><td>SOW abgelaufen 2024-09-15</td><td>2024-10-08 15:22</td><td>SDO-124733</td>
+        </tr>
+        <tr>
+          <td>Ch. Nguyen</td><td>Intern</td><td>Data Science</td><td>SFTP-Marketing / SFTP_WRITE</td><td>Ändern</td><td>Reduzierung auf READ (Rollentausch)</td><td>2024-10-09 09:03</td><td>SDO-124840</td>
+        </tr>
+        <tr>
+          <td>D. Keller</td><td>Intern (Elternzeit)</td><td>CRM Ops</td><td>CRM-SalesPro / CRM_READ</td><td>Bestätigt</td><td>Ersatz übernimmt keine Rolle</td><td>2024-10-10 13:47</td><td>—</td>
+        </tr>
+        <tr>
+          <td>E. Rossi</td><td>Extern (Lieferant)</td><td>Data Science</td><td>DataLake-X / DLX_CONTRACTOR</td><td>Bestätigt</td><td>SOW Verlängerung in Prüfung</td><td>2024-10-11 08:26</td><td>—</td>
+        </tr>
+      </tbody>
+    </table>
+    <aside class="small">Hinweis: Zeile „D. Keller“ illustriert die Lücke bei Langzeitabwesenheit – keine automatisierte temporäre Entziehung möglich, nur TL-Entscheid (siehe Abschnitt 4). Zeile „E. Rossi“ zeigt Abhängigkeit von ThirdPartyHub-Rhythmus.</aside>
+    <!-- Control: 062-030 — erfüllt (Beispieldaten zeigen Verknüpfung Entscheidung -> Ticket/Beleg). -->
+
+    <h2>9 Visualisierung</h2>
+    <figure>
+      
+        <img src="test.png" alt="Prozessdiagramm der Berechtigungsüberprüfung in FDS" width="500" />
+
+    </figure>
+    <!-- nicht relevant: Bild dient der Veranschaulichung des Prozesses, kein Muss für Control-Nachweis -->
+
+    <h2>10 Maßnahmenplan & Verbesserungen</h2>
+    <ul>
+      <li><strong>TPH-Frequenz erhöhen:</strong> Abstimmung mit Vendor-Management zur wöchentlichen Aktualisierung von ThirdPartyHub (Ziel: < 7 Tage Latenz).</li>
+      <li><strong>PeopleCore-Attribut „Langzeitabwesenheit“ integrieren:</strong> Erweiterung der IGP-Schnittstelle, automatische temporäre Entziehung oder Suspension.</li>
+      <li><strong>Admin-Reviews:</strong> Verbindliche Schnittstelle zur CIO-Review-Bestätigung (API/Report), Synchronisierung mit FDS-Personalliste.</li>
+      <li><strong>Policy-Update:</strong> Ergänzung der TL-Meldepflicht um tägliche Reminder bis Umsetzung im System erfolgt.</li>
+    </ul>
+    <!-- nicht relevant: Verbesserungsplan ist zukunftsgerichtet, unterstützt jedoch die Schließung identifizierter Lücken -->
+
+    <h2>11 Anhang</h2>
+    <h3>11.1 RACI-Matrix (Auszug)</h3>
+    <table>
+      <thead><tr><th>Aktivität</th><th>R</th><th>A</th><th>C</th><th>I</th></tr></thead>
+      <tbody>
+        <tr><td>Kampagnen konfigurieren</td><td>FDS-GRC</td><td>AV</td><td>IT-IGP</td><td>FDS-Leitung</td></tr>
+        <tr><td>Review durchführen</td><td>TL</td><td>AV</td><td>GRC</td><td>HR</td></tr>
+        <tr><td>Änderungen umsetzen</td><td>ServiceDesk</td><td>AV</td><td>TL</td><td>Betroffene/r</td></tr>
+      </tbody>
+    </table>
+    <!-- Control: 062-020 — erfüllt (RACI belegt fachliche Zuständigkeit & Autorisierung). -->
+
+    <h3>11.2 Prüfpfad-Checkliste (für interne Nutzung)</h3>
+    <ol>
+      <li>IGP-Kampagnen-Export vorhanden und vollständig?</li>
+      <li>Stichproben-Abgleich: Aufgabenprofil ↔ bestätigte Rollen</li>
+      <li>Ticket-Verknüpfungen vorhanden & abgeschlossen (Vier-Augen-Prinzip)?</li>
+      <li>Externe: SOW-Gültigkeit ↔ Berechtigungsstatus</li>
+      <li>Langzeitabwesenheiten: manuelle Suspendierung erfolgt?</li>
+    </ol>
+    <!-- nicht relevant: Checkliste ist Arbeitsmittel, nicht alleiniger Nachweis -->
+
+    <div class="footer">
+      <p>Erstellt von: FDS-GRC · Genehmigt durch: FDS-Leitung · Nächste Überprüfung des Dokuments: 2026-04-01</p>
+      <p>Änderungshistorie: v1.3 – Klarstellung Geltungsbereich, KPI-Update, Ergänzung Lückenanalyse Admin-Rollen.</p>
+    </div>
+
+    <!-- Zusammenfassender Bewertungsvermerk (für Auditorenlesezeichen):
+         062-020 (Autorisierte fachliche Reviewer): ERFÜLLT – formale Autorisierung, Schulung, fachliche Nähe und Delegationsregister vorhanden; RACI und IGP-Rollenmapping belegen Angemessenheit.
+         062-030 (Nachvollziehbare Doku): ERFÜLLT – lückenlose Kette Reviewentscheidung → Ticket → Umsetzung → Abschluss, Aufbewahrung definiert, DMS-Export.
+         062-010 (Jährlich & zeitnah anpassen): TEILWEISE ERFÜLLT – Frequenz übererfüllt, aber zeitnahe Anpassung bei Externen (monatliche TPH-Latenz) und Langzeitabwesenheiten (fehlendes Attribut in Schnittstelle) nicht zuverlässig.
+         062-040 (Admin-Berechtigungen): NICHT ERFÜLLT – außerhalb Geltungsbereich, kein Nachweis über mind. jährliche Admin-Reviews im FDS-Kontext. -->
+  </main>
+</body>
+</html>

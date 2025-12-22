@@ -14,7 +14,8 @@ async def index_files(
     collection_id: str,
     paths: list[str], 
     doc_ids: list[str],
-    mode: Literal["none", "all", "imgs", "tables", "texts"] = "none"
+    mode: Literal["none", "all", "imgs", "tables", "texts"] = "none",
+
 ) -> list[OutputIndexState]:
     """
     - Input sind Dokumente einer Collection
