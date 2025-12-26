@@ -30,6 +30,8 @@ async def retrieve_docs(
 ) -> list[OutputRetrievalState]:
     """
     - Dursuchen einer Collection nach relevanten Dokumenten basierend auf mehreren Abfragen
+    - Normalisiert rohe Graph-Ergebnisse zu einer Instanz des erwarteten Antwortschemas,
+      damit nachgelagerte Auditschritte einheitliche Typen erhalten
     """
     
     retrieval_config = RunnableConfig(
@@ -59,5 +61,13 @@ async def retrieve_docs(
         inputs=retrieval_states,
         config=retrieval_configs
     )
-    
-    return [OutputRetrievalState.model_validate(r) for r in results]
+
+    normalized_results = []
+    for result in results:
+        llm_answer = result.get("llm_answer")
+        if isinstance(llm_answer, dict):
+            result["llm_answer"] = generate_answer_schema.model_validate(llm_answer)
+
+        normalized_results.append(result)
+
+    return [OutputRetrievalState.model_validate(r) for r in normalized_results]
