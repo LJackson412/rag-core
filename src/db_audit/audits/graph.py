@@ -59,7 +59,7 @@ async def audit(
 
         rs.llm_answer = audit_res
 
-    requirement_audits: list[tuple[str, AuditResult]] = []
+    requirement_audits = []
     for requirement, retrieval_state in zip(state.requirements, retrieval_states):
         audit_result = retrieval_state.llm_answer
         if isinstance(audit_result, AuditResult):
