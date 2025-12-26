@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Type, TypeVar
+from typing import Annotated, Literal, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field
@@ -20,7 +20,15 @@ class AuditConfig(BaseModel):
         description="",
         json_schema_extra={"langgraph_nodes": ["generate_answer"]},
     )
-    
+    mode: Annotated[
+        Literal["none", "all"],
+        Field(
+            default="all",
+            description=(
+                ""
+            ),
+        ),
+    ]
     # Audit:
     number_of_docs_to_retrieve: Annotated[
         int,

@@ -28,7 +28,7 @@ async def index(
             collection_id=state.workitem_element_id,
             paths=state.paths,
             doc_ids=state.doc_ids,
-            mode=state.mode
+            mode=audit_config.mode
         )
         return {"index_states": index_states}
     return {"index_states": []}
