@@ -4,7 +4,6 @@ from typing import Annotated, Literal, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 from pydantic import BaseModel, Field, PrivateAttr
-from pydantic.json_schema import SkipJsonSchema
 
 from rag_core.providers.factory import DefaultProviderFactory, ProviderFactory
 from rag_core.retrieval.prompts import (
@@ -170,12 +169,15 @@ class RetrievalConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
-    generate_answer_schema: SkipJsonSchema[Type[BaseModel]] = Field(
-        default=LLMAnswer,
-        description="Runtime-only (not part of JSON schema/config UI).",
-        json_schema_extra={"langgraph_nodes": ["generate_answer"]},
-    )
+ 
+    _generate_answer_schema: Type[BaseModel] = PrivateAttr(default=LLMAnswer)
+    
+    @property
+    def generate_answer_schema(self) -> Type[BaseModel]:
+        return self._generate_answer_schema
+    
     _provider_factory: ProviderFactory = PrivateAttr(default_factory=DefaultProviderFactory)
+    
     @property
     def provider_factory(self) -> ProviderFactory:
         return self._provider_factory
