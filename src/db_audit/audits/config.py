@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Literal, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
-from pydantic import BaseModel, Field
-from pydantic.json_schema import SkipJsonSchema
+from pydantic import BaseModel, Field, PrivateAttr
 
 from db_audit.audits.prompts import AUDIT_PROMPT
 from db_audit.audits.schema import LLMAuditResult
@@ -50,11 +49,12 @@ class AuditConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
-    audit_schema: SkipJsonSchema[Type[BaseModel]] = Field(
-        default=LLMAuditResult,
-        description="",
-        json_schema_extra={"langgraph_nodes": ["generate_answer"]},
-    )
+     
+    _audit_schema: Type[BaseModel] = PrivateAttr(default=LLMAuditResult)
+    
+    @property
+    def generate_answer_schema(self) -> Type[BaseModel]:
+        return self._audit_schema
 
 
     @classmethod
