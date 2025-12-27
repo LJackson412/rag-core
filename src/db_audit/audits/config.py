@@ -53,7 +53,7 @@ class AuditConfig(BaseModel):
     _audit_schema: Type[BaseModel] = PrivateAttr(default=LLMAuditResult)
     
     @property
-    def generate_answer_schema(self) -> Type[BaseModel]:
+    def audit_schema(self) -> Type[BaseModel]:
         return self._audit_schema
 
 
