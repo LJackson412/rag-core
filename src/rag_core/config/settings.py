@@ -7,7 +7,9 @@ load_dotenv()
 
 
 class Settings:
-    API_KEY: SecretStr = SecretStr(os.environ["OPENAI_API_KEY"])
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+    API_KEY: SecretStr = SecretStr(os.getenv("OPENAI_API_KEY", ""))
 
     POPPLER_PATH = os.getenv("POPPLER_PATH")
     TESSERACT_PATH = os.getenv("TESSERACT_PATH")

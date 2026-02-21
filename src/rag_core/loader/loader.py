@@ -1,3 +1,5 @@
+import logging
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -12,7 +14,11 @@ from unstructured.partition.xlsx import partition_xlsx
 
 from rag_core.loader.schema import Segment
 
-#TODO: Refactor to reduce code duplication between loaders
+logger = logging.getLogger(__name__)
+
+# TODO: Refactor to reduce code duplication between loaders
+
+SUPPORTED = [".pdf", ".csv", ".docx", ".xlsx", ".png", ".jpg", ".heic"]
 
 COMMON_MD_DEFAULTS = {
     "page_number": -1,
@@ -61,13 +67,19 @@ def _segment_from_element(element: Element, category: str) -> Segment:
 
 @dataclass(frozen=True)
 class ChunkingConfig:
-    max_characters: int = 4500  # Hard-Limit: kein Chunk wird länger als das
+    max_characters: int = 4500  # Hard-Limit: kein Chunk wird länger 
     new_after_n_chars: int = 3500  # Soft-Limit: lieber neuen Chunk starten
-    overlap: int = 0  # Overlap (Zeichen) – standardmäßig NUR bei Splits oversized Elemente
+    overlap: int = (
+        0  # Overlap (Zeichen) – standardmäßig NUR bei Splits oversized Elemente
+    )
     overlap_all: bool = False  # Overlap auch zwischen “normalen” Chunks anwenden
-    combine_text_under_n_chars: int = 600  # Kleine “Pseudo-Titel”-Sektionen zusammenführen
+    combine_text_under_n_chars: int = (
+        600  # Kleine “Pseudo-Titel”-Sektionen zusammenführen
+    )
     multipage_sections: bool = True  # Chunks über Seitenumbrüche hinweg
-    include_orig_elements: bool = True  # Original-Elemente in chunk.metadata.orig_elements behalten
+    include_orig_elements: bool = (
+        True  # Original-Elemente in chunk.metadata.orig_elements behalten
+    )
 
 
 DEFAULT_CHUNKING = ChunkingConfig()
@@ -80,6 +92,9 @@ def load_pdf(
 ) -> list[Segment]:
     if lang is None:
         lang = ["eng", "deu"]
+
+    t0 = time.perf_counter()
+    logger.info("load_pdf start", extra={"path": path, "lang": lang})
 
     elements = partition_pdf(
         filename=path,
@@ -126,8 +141,17 @@ def load_pdf(
     ):
         segments.append(_segment_from_element(c, category="Text"))
 
-    return segments
+    dt_ms = round((time.perf_counter() - t0) * 1000)
+    logger.info(
+        "load_pdf done",
+        extra={
+            "path": path,
+            "segments": len(segments),
+            "ms": dt_ms,
+        },
+    )
 
+    return segments
 
 
 def load_imgs(
@@ -137,6 +161,9 @@ def load_imgs(
 ) -> list[Segment]:
     if lang is None:
         lang = ["eng", "deu"]
+
+    t0 = time.perf_counter()
+    logger.info("load_imgs start", extra={"path": path, "lang": lang})
 
     elements = partition_image(
         filename=path,
@@ -183,12 +210,26 @@ def load_imgs(
     ):
         segments.append(_segment_from_element(c, category="Text"))
 
+    dt_ms = round((time.perf_counter() - t0) * 1000)
+    logger.info(
+        "load_imgs done",
+        extra={
+            "path": path,
+            "segments": len(segments),
+            "ms": dt_ms,
+        },
+    )
+
     return segments
+
 
 def load_csv(
     path: str,
     chunking: ChunkingConfig = DEFAULT_CHUNKING,
 ) -> list[Segment]:
+    t0 = time.perf_counter()
+    logger.info("load_csv start", extra={"path": path})
+
     table_elements = partition_csv(filename=path)
 
     segments: list[Segment] = []
@@ -207,12 +248,23 @@ def load_csv(
         ):
             segments.append(_segment_from_element(c, category="Table"))
 
+    dt_ms = round((time.perf_counter() - t0) * 1000)
+    logger.info(
+        "load_csv done",
+        extra={"path": path, "segments": len(segments), "ms": dt_ms},
+    )
+
     return segments
 
+# TODO: .xlsx dateien haben nicht nur category Table, sondern auch Text (z.B. in Kommentaren). 
+# Aktuell werden alle Elemente als Table geladen, auch die Text-Elemente. Das sollte noch angepasst werden.
 def load_xlsx(
     path: str,
     chunking: ChunkingConfig = DEFAULT_CHUNKING,
 ) -> list[Segment]:
+    t0 = time.perf_counter()
+    logger.info("load_xlsx start", extra={"path": path})
+
     table_elements = partition_xlsx(filename=path)
 
     segments: list[Segment] = []
@@ -231,6 +283,12 @@ def load_xlsx(
         ):
             segments.append(_segment_from_element(c, category="Table"))
 
+    dt_ms = round((time.perf_counter() - t0) * 1000)
+    logger.info(
+        "load_xlsx done",
+        extra={"path": path, "segments": len(segments), "ms": dt_ms},
+    )
+
     return segments
 
 
@@ -238,6 +296,9 @@ def load_docx(
     path: str,
     chunking: ChunkingConfig = DEFAULT_CHUNKING,
 ) -> list[Segment]:
+    t0 = time.perf_counter()
+    logger.info("load_docx start", extra={"path": path})
+
     elements = partition_docx(
         filename=path,
         infer_table_structure=True,
@@ -281,6 +342,16 @@ def load_docx(
     ):
         segments.append(_segment_from_element(c, category="Text"))
 
+    dt_ms = round((time.perf_counter() - t0) * 1000)
+    logger.info(
+        "load_docx done",
+        extra={
+            "path": path,
+            "segments": len(segments),
+            "ms": dt_ms,
+        },
+    )
+
     return segments
 
 
@@ -298,5 +369,21 @@ def load(path: str, lang: list[str] | None = None) -> list[Segment]:
     if suffix in (".png", ".jpg", ".heic"):
         return load_imgs(path)
 
-    supported = [".pdf", ".csv", ".docx"]
-    raise ValueError(f"Unsupported file type: {suffix}. Supported types are {supported}.")
+    
+    logger.warning(
+        "unsupported file type",
+        extra={"path": path, "suffix": suffix, "supported": SUPPORTED},
+    )
+    raise ValueError(
+        f"Unsupported file type: {suffix}. Supported types are {SUPPORTED}."
+    )
+
+if __name__ == "__main__":
+    
+    
+    # segs = load_xlsx("./data/Prod/M_00003822/Berechtigungskonzept_DigiBef_V3.0.xlsx")
+    elements = partition_xlsx(filename="./data/Prod/M_00003822/Berechtigungskonzept_DigiBef_V3.0.xlsx")
+    
+    print(elements[5].category)
+    print(elements[5].metadata.to_dict())
+    

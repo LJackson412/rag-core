@@ -27,48 +27,47 @@ from rag_core.utils.utils import extract_provider_and_model, make_chunk_id
 
 logger = logging.getLogger(__name__)
 
+PERSIST_DIRECTORY = ".chroma"
 
-def _log_ctx(state: Any, config: Any, node: str) -> dict[str, Any]:
-    metadata = (config or {}).get("metadata", {}) or {}
+
+def _log_ctx(state: OverallIndexState, index_config: IndexConfig) -> dict[str, Any]:
     return {
-        "node": node,
-        "doc_id": getattr(state, "doc_id", None),
-        "collection_id": getattr(state, "collection_id", None),
+        "collection_id": state.collection_id,
+        "doc_id": state.doc_id,
         "path": getattr(state, "path", None),
-        "run_id": metadata.get("run_id") or metadata.get("trace_id"),
+        "mode": index_config.mode,
+        "embedding_model": index_config.embedding_model,
+        "gen_metadata_model": index_config.gen_metadata_model,
     }
 
 
-def _ms(start: float) -> int:
-    return int((time.monotonic() - start) * 1000)
+def _ms(t0: float) -> int:
+    return round((time.perf_counter() - t0) * 1000)
 
 
 async def load_file(
     state: OverallIndexState,
     config: RunnableConfig,
 ) -> dict[str, Any]:
-
-    node = "load"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
-
     index_config = IndexConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, index_config)
 
     gen_metadata_model = index_config.gen_metadata_model
     embedding_model = index_config.embedding_model
-
-    logger.info(
-        "Load start",
-        extra={
-            **ctx,
-            "gen_metadata_model": gen_metadata_model,
-            "embedding_model": embedding_model,
-        },
-    )
+    enrich_mode = index_config.mode
+    
+    t0 = time.perf_counter()
+    logger.info("load file start", extra={**ctx})
 
     segs = await asyncio.to_thread(load, state.path)
 
-
+    tables = [s for s in segs if s.category == "Table"]
+    imgs = [s for s in segs if s.category == "Image"]
+    texts = [s for s in segs if s.category == "Text"]
+    
+    t0 = time.perf_counter()
+    logger.info("load file done", extra={**ctx, "n_tables": len(tables), "n_imgs": len(imgs), "n_texts": len(texts), "ms": _ms(t0)})
+    
     def add_metadata(segs: list[Segment]) -> list[Segment]:
         updated = []
         for i, s in enumerate(segs):
@@ -85,46 +84,26 @@ async def load_file(
                 "collection_id": state.collection_id,
                 "embedding_model": embedding_model,
                 "gen_metadata_model": gen_metadata_model,
+                "enrich_mode": enrich_mode,
             }
 
             updated.append(replace(s, id=chunk_id, metadata=md))
         return updated
 
-    tables = [s for s in segs if s.category == "Table"]
-    imgs = [s for s in segs if s.category == "Image"]
-    texts = [s for s in segs if s.category == "Text"]
-
     tables = add_metadata(tables)
-    imgs   = add_metadata(imgs)
-    texts  = add_metadata(texts)
+    imgs = add_metadata(imgs)
+    texts = add_metadata(texts)
 
-    logger.info(
-        "Load done",
-        extra={
-            **ctx,
-            "duration_ms": _ms(start),
-            "tables_count": len(tables),
-            "imgs_count": len(imgs),
-            "texts_count": len(texts),
-            "total_segments": len(segs),
-        },
-    )
-
-    return {
-        "tables": tables,
-        "imgs": imgs,
-        "texts": texts
-    }
+    return {"tables": tables, "imgs": imgs, "texts": texts}
 
 
+# TODO: add logging to llm exception
 async def enrich_texts_with_llm(
     state: OverallIndexState,
     config: RunnableConfig,
 ) -> dict[str, Any]:
-    node = "enrich_texts_with_llm"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
     index_config = IndexConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, index_config)
 
     provider_factory = index_config.provider_factory
 
@@ -134,18 +113,10 @@ async def enrich_texts_with_llm(
     )
 
     texts_segs = state.texts
+    t0 = time.perf_counter()
+    logger.info("enrich_texts start", extra={**ctx, "n_texts": len(texts_segs)})
 
     texts_as_string = [ts.text for ts in texts_segs]
-    logger.info(
-        "LLM enrichment start",
-        extra={
-            **ctx,
-            "kind": "texts",
-            "items": len(texts_as_string),
-            "provider": gen_metadata_provider,
-            "model": model_name,
-        },
-    )
     llm_resps = await gen_llm_structured_data_from_texts(
         texts_as_string,
         provider_factory.build_chat_model(
@@ -156,45 +127,25 @@ async def enrich_texts_with_llm(
     )
 
     enriched_texts = []
-    fail_count = 0
+    failures = 0
     for text_seg, llm_res in zip(texts_segs, llm_resps, strict=True):
 
         if isinstance(llm_res, Exception):
-            fail_count += 1
+            failures += 1
             llm_exception = LLMException(
                 page_number=text_seg.page_number,
                 message=str(llm_res),
                 traceback="".join(traceback.format_exception(llm_res)),
             )
-            et = replace(
-                text_seg,
-                llm_metadata=None,
-                llm_exception=llm_exception
-            )
+            et = replace(text_seg, llm_metadata=None, llm_exception=llm_exception)
         else:
-            et = replace(
-                text_seg,
-                llm_metadata=llm_res,
-                llm_exception=None
-            )
+            et = replace(text_seg, llm_metadata=llm_res, llm_exception=None)
 
         enriched_texts.append(et)
 
-    ok_count = len(enriched_texts) - fail_count
-    level = logging.WARNING if fail_count else logging.INFO
-    logger.log(
-        level,
-        "LLM enrichment done",
-        extra={
-            **ctx,
-            "kind": "texts",
-            "duration_ms": _ms(start),
-            "items": len(enriched_texts),
-            "ok": ok_count,
-            "failed": fail_count,
-            "provider": gen_metadata_provider,
-            "model": model_name,
-        },
+    logger.info(
+        "enrich_texts done",
+        extra={**ctx, "n_texts": len(texts_segs), "failures": failures, "ms": _ms(t0)},
     )
 
     return {
@@ -206,10 +157,8 @@ async def enrich_imgs_with_llm(
     state: OverallIndexState,
     config: RunnableConfig,
 ) -> dict[str, Any]:
-    node = "enrich_imgs_with_llm"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
     index_config = IndexConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, index_config)
 
     provider_factory = index_config.provider_factory
 
@@ -217,19 +166,12 @@ async def enrich_imgs_with_llm(
     gen_metadata_provider, model_name = extract_provider_and_model(
         index_config.gen_metadata_model
     )
+
     img_segments = state.imgs
+    t0 = time.perf_counter()
+    logger.info("enrich_imgs start", extra={**ctx, "n_imgs": len(img_segments)})
 
     img_urls = [img_seg.img_url for img_seg in img_segments]
-    logger.info(
-        "LLM enrichment start",
-        extra={
-            **ctx,
-            "kind": "imgs",
-            "items": len(img_urls),
-            "provider": gen_metadata_provider,
-            "model": model_name,
-        },
-    )
     llm_resps = await gen_llm_structured_data_from_imgs(
         img_urls,
         provider_factory.build_chat_model(
@@ -240,45 +182,25 @@ async def enrich_imgs_with_llm(
     )
 
     enriched_imgs = []
-    fail_count = 0
+    failures = 0
     for img_seg, llm_res in zip(img_segments, llm_resps, strict=True):
 
         if isinstance(llm_res, Exception):
-            fail_count += 1
+            failures += 1
             llm_exception = LLMException(
                 page_number=img_seg.page_number,
                 message=str(llm_res),
                 traceback="".join(traceback.format_exception(llm_res)),
             )
-            ei = replace(
-                img_seg,
-                llm_metadata=None,
-                llm_exception=llm_exception
-            )
+            ei = replace(img_seg, llm_metadata=None, llm_exception=llm_exception)
         else:
-            ei = replace(
-                img_seg,
-                llm_metadata=llm_res,
-                llm_exception=None
-            )
+            ei = replace(img_seg, llm_metadata=llm_res, llm_exception=None)
 
         enriched_imgs.append(ei)
 
-    ok_count = len(enriched_imgs) - fail_count
-    level = logging.WARNING if fail_count else logging.INFO
-    logger.log(
-        level,
-        "LLM enrichment done",
-        extra={
-            **ctx,
-            "kind": "imgs",
-            "duration_ms": _ms(start),
-            "items": len(enriched_imgs),
-            "ok": ok_count,
-            "failed": fail_count,
-            "provider": gen_metadata_provider,
-            "model": model_name,
-        },
+    logger.info(
+        "enrich_imgs done",
+        extra={**ctx, "n_imgs": len(img_segments), "failures": failures, "ms": _ms(t0)},
     )
 
     return {"imgs": enriched_imgs}
@@ -288,10 +210,8 @@ async def enrich_tables_with_llm(
     state: OverallIndexState,
     config: RunnableConfig,
 ) -> dict[str, Any]:
-    node = "enrich_tables_with_llm"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
     index_config = IndexConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, index_config)
 
     provider_factory = index_config.provider_factory
 
@@ -299,19 +219,12 @@ async def enrich_tables_with_llm(
     gen_metadata_provider, model_name = extract_provider_and_model(
         index_config.gen_metadata_model
     )
+
     table_segments = state.tables
+    t0 = time.perf_counter()
+    logger.info("enrich_tables start", extra={**ctx, "n_tables": len(table_segments)})
 
     tables_inputs = [(ts.text_as_html or ts.text) for ts in table_segments]
-    logger.info(
-        "LLM enrichment start",
-        extra={
-            **ctx,
-            "kind": "tables",
-            "items": len(tables_inputs),
-            "provider": gen_metadata_provider,
-            "model": model_name,
-        },
-    )
     llm_resps = await gen_llm_structured_data_from_texts(
         tables_inputs,
         provider_factory.build_chat_model(
@@ -322,44 +235,29 @@ async def enrich_tables_with_llm(
     )
 
     enriched_tables = []
-    fail_count = 0
+    failures = 0
     for ts, llm_res in zip(table_segments, llm_resps, strict=True):
 
         if isinstance(llm_res, Exception):
-            fail_count += 1
+            failures += 1
             llm_exception = LLMException(
                 page_number=ts.page_number,
                 message=str(llm_res),
                 traceback="".join(traceback.format_exception(llm_res)),
             )
-            et = replace(
-                ts,
-                llm_metadata=None,
-                llm_exception=llm_exception
-            )
+            et = replace(ts, llm_metadata=None, llm_exception=llm_exception)
         else:
-            et = replace(
-                ts,
-                llm_metadata=llm_res,
-                llm_exception=None
-            )
+            et = replace(ts, llm_metadata=llm_res, llm_exception=None)
 
         enriched_tables.append(et)
 
-    ok_count = len(enriched_tables) - fail_count
-    level = logging.WARNING if fail_count else logging.INFO
-    logger.log(
-        level,
-        "LLM enrichment done",
+    logger.info(
+        "enrich_tables done",
         extra={
             **ctx,
-            "kind": "tables",
-            "duration_ms": _ms(start),
-            "items": len(enriched_tables),
-            "ok": ok_count,
-            "failed": fail_count,
-            "provider": gen_metadata_provider,
-            "model": model_name,
+            "n_tables": len(table_segments),
+            "failures": failures,
+            "ms": _ms(t0),
         },
     )
 
@@ -367,10 +265,9 @@ async def enrich_tables_with_llm(
 
 
 async def save(state: OverallIndexState, config: RunnableConfig) -> dict[str, Any]:
-    node = "save"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
     index_config = IndexConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, index_config)
+
 
     provider_factory = index_config.provider_factory
 
@@ -379,28 +276,20 @@ async def save(state: OverallIndexState, config: RunnableConfig) -> dict[str, An
     )
     vstore_provider = index_config.vstore
 
-    logger.info(
-        "Save start",
-        extra={
-            **ctx,
-            "segments": len(state.texts + state.imgs + state.tables),
-            "vstore_provider": vstore_provider,
-            "embedding_provider": embedding_provider,
-            "embedding_model": model_name,
-        },
-    )
     embedding_model = provider_factory.build_embeddings(
         provider=embedding_provider, model_name=model_name
     )
-    t_vstore = time.monotonic()
+    
+    t0 = time.perf_counter()
+    logger.info("save start", extra={**ctx})
+    
     vstore = await asyncio.to_thread(
         provider_factory.build_vstore,
         embedding_model,
         provider=vstore_provider,
         collection_name=state.collection_id,
-        persist_directory=".chroma"
+        persist_directory=PERSIST_DIRECTORY,
     )
-    logger.debug("VStore built", extra={**ctx, "duration_ms": _ms(t_vstore)})
 
     segments = state.texts + state.imgs + state.tables
 
@@ -408,51 +297,37 @@ async def save(state: OverallIndexState, config: RunnableConfig) -> dict[str, An
 
     index_docs = filter_complex_metadata(docs)
 
-    if not index_docs:
-        logger.warning("No docs to index (skipping)", extra={**ctx, "duration_ms": _ms(start)})
-        return {"index_docs": index_docs}
-
     try:
-        await vstore.aadd_documents(index_docs)
-    except Exception:
-        logger.exception("Indexing failed", extra={**ctx, "docs": len(index_docs)})
+        if index_docs:
+            await vstore.aadd_documents(index_docs)
+    except:
+        logger.error("Error saving documents to vector store", extra={"collection_id": state.collection_id, "doc_id": state.doc_id, "traceback": traceback.format_exc()})
         raise
-
-    logger.info(
-        "Save done",
-        extra={**ctx, "duration_ms": _ms(start), "indexed_docs": len(index_docs)},
-    )
+    
+    logger.info("save done", extra={**ctx, "n_indexed": len(index_docs), "ms": _ms(t0)})
 
     return {"index_docs": index_docs}
 
 
 def route_by_mode(state: OverallIndexState, config: RunnableConfig) -> list[str]:
-    node = "route_by_mode"
-    ctx = _log_ctx(state, config, node)
-
     index_config = IndexConfig.from_runnable_config(config)
-    mode = index_config.mode
 
-    if mode == "none":
-        nxt = ["save"]
-    elif mode == "imgs":
-        nxt = ["enrich_imgs_with_llm"]
-    elif mode == "tables":
-        nxt = ["enrich_tables_with_llm"]
-    elif mode == "texts":
-        nxt = ["enrich_texts_with_llm"]
-    elif mode == "all":
-        nxt = [
+    if index_config.mode == "none":
+        return ["save"]
+    if index_config.mode == "imgs":
+        return ["enrich_imgs_with_llm"]
+    if index_config.mode == "tables":
+        return ["enrich_tables_with_llm"]
+    if index_config.mode == "texts":
+        return ["enrich_texts_with_llm"]
+    elif index_config.mode == "all":
+        return [
             "enrich_texts_with_llm",
             "enrich_imgs_with_llm",
             "enrich_tables_with_llm",
         ]
     else:
-        logger.error("Unsupported index mode", extra={**ctx, "mode": mode})
         raise ValueError(f"Unsupported index mode: {index_config.mode}")
-
-    logger.info("Routing decided", extra={**ctx, "mode": mode, "next_nodes": nxt})
-    return nxt
 
 
 builder = StateGraph(
@@ -484,4 +359,4 @@ builder.add_edge("save", END)
 
 
 graph = builder.compile()
-graph.name = "OCR-Indexer"
+graph.name = "Indexer"

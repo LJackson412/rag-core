@@ -6,11 +6,12 @@ from pydantic import BaseModel, Field
 
 # NOTE: LLMMetaData is used for enriching segments with LLM with structured llm outputs
 
+
 class LLMMetaData(BaseModel):
     language: Annotated[
         Literal["de", "eng", "n/a"],
         Field(
-            description="Detected document segment language; all outputs must use this language.",
+            description="Detected the original language of the document section! If the language is not recognizable or not listed = n/a",
         ),
     ]
     title: Annotated[
@@ -37,14 +38,13 @@ class LLMMetaData(BaseModel):
         list[str],
         Field(
             default_factory=list,
-            description=(
-                "List of 2-3 short tags to enrich this section with metadata, "
-            ),
+            description=("List of 2-3 short tags to enrich this section with metadata"),
         ),
     ]
 
 
 # -------------------------------------------------------------------------------
+
 
 class LLMException(BaseModel):
     page_number: Annotated[

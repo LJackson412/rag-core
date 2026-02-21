@@ -18,13 +18,14 @@ def get_openai_chat_model(
         model=model_name,
         temperature=temp,
     )
-    
+
+
 def get_chat_model(
-    provider: str = "openai", 
+    provider: str = "openai",
     model_name: str = "gpt-4.1",
     temp: float = 0.0,
     max_retries: int = 5,
-    rate_limiter: InMemoryRateLimiter | None = None
+    rate_limiter: InMemoryRateLimiter | None = None,
 ) -> BaseChatModel:
     match provider:
         case "openai":

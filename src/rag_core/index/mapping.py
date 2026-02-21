@@ -10,16 +10,16 @@ def map_to_docs(data: Sequence[Segment]) -> list[Document]:
     docs = []
     for segment in data:
 
-        if segment.llm_exception is not None: # for llm exceptions no embedding
+        if segment.llm_exception is not None:  # for llm exceptions no embedding
             continue
-        
+
         llm_meta = segment.llm_metadata
-        
+
         if llm_meta:
             emb_content = llm_meta.retrieval_summary
-        else: 
+        else:
             emb_content = segment.text
-        
+
         metadata = {
             **segment.metadata,
             "llm_language": llm_meta.language if llm_meta else "",

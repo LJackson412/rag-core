@@ -7,7 +7,6 @@ from typing import Any, Dict, cast
 from langchain_core.documents import Document
 from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import HumanMessage
-from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
@@ -23,152 +22,117 @@ from rag_core.utils.utils import extract_provider_and_model
 
 logger = logging.getLogger(__name__)
 
-GRAPH_NAME = "Retriever"
+PERSIST_DIRECTORY = ".chroma"
 
 
-def _log_ctx(state: Any, config: Any, node: str) -> dict[str, Any]:
-    metadata = (config or {}).get("metadata", {}) or {}
-    user_q = None
-    try:
-        user_q = getattr(state.messages[-1], "content", None)
-    except Exception:
-        pass
-
+def _log_ctx(
+    state: OverallRetrievalState, retrieval_config: RetrievalConfig
+) -> dict[str, Any]:
     return {
-        "graph": GRAPH_NAME,
-        "node": node,
-        "collection_id": getattr(state, "collection_id", None),
-        "doc_id": getattr(state, "doc_id", None),
-        "run_id": metadata.get("run_id") or metadata.get("trace_id"),
-        "user_question_len": len(user_q) if isinstance(user_q, str) else None,
+        "collection_id": state.collection_id,
+        "doc_id": state.doc_id,
+        "generate_questions_model": retrieval_config.generate_questions_model,
+        "embedding_model": retrieval_config.embedding_model,
+        "compress_docs_model": retrieval_config.compress_docs_model,
+        "generate_answer_model": retrieval_config.generate_answer_model,
     }
 
 
-def _ms(start: float) -> int:
-    return int((time.monotonic() - start) * 1000)
+def _ms(t0: float) -> int:
+    return round((time.perf_counter() - t0) * 1000)
 
 
 async def generate_questions(
     state: OverallRetrievalState, config: RunnableConfig
 ) -> dict[str, list[str]]:
-    node = "generate_questions"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
-
     retrieval_config = RetrievalConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, retrieval_config)
+
     provider_factory = retrieval_config.provider_factory
-    
+    generate_questions_model = retrieval_config.generate_questions_model
+    number_of_llm_generated_questions = (
+        retrieval_config.number_of_llm_generated_questions
+    )
+    generate_questions_prompt = retrieval_config.generate_questions_prompt
+
     generate_questions_provider, model_name = extract_provider_and_model(
-        retrieval_config.generate_questions_model
+        generate_questions_model
     )
 
-    number = retrieval_config.number_of_llm_generated_questions
+    number = number_of_llm_generated_questions
     user_question = state.messages[-1].content
-
-    logger.info(
-        "Generate questions start",
-        extra={
-            **ctx,
-            "provider": generate_questions_provider,
-            "model": model_name,
-            "number": number,
-        },
-    )
 
     structured_llm = provider_factory.build_chat_model(
         provider=generate_questions_provider,
         model_name=model_name,
         temp=0.3,  # for semantic relevant questions
     ).with_structured_output(LLMQuestions)
-    
-    generate_questions_prompt = retrieval_config.generate_questions_prompt
 
-    prompt = PromptTemplate(
-        input_variables=["question", "number"],
-        template=generate_questions_prompt,
+    text_prompt = generate_questions_prompt.format(
+        question=user_question, number=number
     )
+    llm_input = [HumanMessage(content=text_prompt)]
 
-    chain = prompt | structured_llm
+    t0 = time.perf_counter()
+    logger.info("generate questions start", extra={**ctx, "n_requested": number})
+
     try:
         llm_output = cast(
             LLMQuestions,
-            await chain.ainvoke({"question": user_question, "number": number}),
+            await structured_llm.ainvoke(
+                llm_input,
+            ),
         )
-    except Exception:
-        logger.exception(
-            "Generate questions failed",
+    except Exception as e:
+        logger.warning(
+            "Error during generating questions",
             extra={
                 **ctx,
-                "provider": generate_questions_provider,
-                "model": model_name,
+                "error": str(e),
             },
         )
-        raise
+        raise e
 
-    questions = llm_output.questions or []
-    level = logging.WARNING if len(questions) == 0 else logging.INFO
-    logger.log(
-        level,
-        "Generate questions done",
-        extra={**ctx, "duration_ms": _ms(start), "generated_questions": len(questions)},
+    logger.info(
+        "generate questions done",
+        extra={
+            **ctx,
+            "n_requested": number,
+            "n_questions": len(llm_output.questions),
+            "ms": _ms(t0),
+        },
     )
 
-    return {"llm_questions": questions}
+    return {"llm_questions": llm_output.questions}
 
 
 async def retrieve_docs(
     state: OverallRetrievalState, config: RunnableConfig
 ) -> dict[str, list[Document]]:
-    node = "retrieve"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
     retrieval_config = RetrievalConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, retrieval_config)
 
     provider_factory = retrieval_config.provider_factory
-    
-    embedding_provider, model_name = extract_provider_and_model(
-        retrieval_config.embedding_model
-    )
+    embedding_name = retrieval_config.embedding_model
+    number_of_docs_to_retrieve = retrieval_config.number_of_docs_to_retrieve
+    include_original_question = retrieval_config.include_original_question
     vstore_provider = retrieval_config.vstore
 
-    k = retrieval_config.number_of_docs_to_retrieve
-    include_original_question = retrieval_config.include_original_question
-    user_question = cast(str, state.messages[-1].content)
-
-    logger.info(
-        "Retrieve start",
-        extra={
-            **ctx,
-            "embedding_provider": embedding_provider,
-            "embedding_model": model_name,
-            "vstore_provider": vstore_provider,
-            "k": k,
-            "include_original_question": include_original_question,
-            "filter_doc_id": state.doc_id is not None,
-        },
-    )
-
+    embedding_provider, model_name = extract_provider_and_model(embedding_name)
     embedding_model = provider_factory.build_embeddings(
-        provider=embedding_provider, model_name=model_name
+        provider=embedding_provider,
+        model_name=model_name,
     )
 
-    vstore_start = time.monotonic()
-    try:
-        vstore = await asyncio.to_thread(
-            provider_factory.build_vstore,
-            embedding_model,
-            provider=vstore_provider,
-            collection_name=state.collection_id,
-            persist_directory=".chroma",
-        )
-    except Exception:
-        logger.exception(
-            "VStore build failed", extra={**ctx, "vstore_provider": vstore_provider}
-        )
-        raise
-    logger.debug("VStore built", extra={**ctx, "duration_ms": _ms(vstore_start)})
+    vstore = await asyncio.to_thread(
+        provider_factory.build_vstore,
+        embedding_model,
+        provider=vstore_provider,
+        collection_name=state.collection_id,
+        persist_directory=PERSIST_DIRECTORY,
+    )
 
-    search_kwargs: Dict[str, Any] = {"k": k}
+    search_kwargs: Dict[str, Any] = {"k": number_of_docs_to_retrieve}
 
     if state.doc_id is not None:
         search_kwargs["filter"] = {"doc_id": state.doc_id}
@@ -178,18 +142,16 @@ async def retrieve_docs(
         search_kwargs=search_kwargs,
     )
 
-    queries = (
-        [user_question] + state.llm_questions
-        if include_original_question
-        else list(state.llm_questions)
-    )
-    logger.debug("Retriever batch", extra={**ctx, "queries": len(queries)})
-    try:
-        docs_per_query = await retriever.abatch(queries)
-    except Exception:
-        logger.exception("Retriever batch failed", extra={**ctx, "queries": len(queries)})
-        raise
+    user_question = cast(str, state.messages[-1].content)
+    if include_original_question:
+        queries = [user_question] + state.llm_questions
+    else:
+        queries = state.llm_questions
 
+    t0 = time.perf_counter()
+    logger.info("retrieve docs start", extra={**ctx, "n_queries": len(queries)})
+
+    docs_per_query = await retriever.abatch(queries)
     all_docs = [doc for docs in docs_per_query for doc in docs]
 
     def _unique_documents(documents: Sequence[Document]) -> list[Document]:
@@ -205,18 +167,15 @@ async def retrieve_docs(
         return unique_docs
 
     unique_docs = _unique_documents(all_docs)
-    dropped = len(all_docs) - len(unique_docs)
-    level = logging.WARNING if len(unique_docs) == 0 else logging.INFO
-    logger.log(
-        level,
-        "Retrieve done",
+
+    logger.info(
+        "retrieve docs done",
         extra={
             **ctx,
-            "duration_ms": _ms(start),
-            "queries": len(queries),
-            "retrieved_total": len(all_docs),
-            "unique_docs": len(unique_docs),
-            "dedup_dropped": dropped,
+            "n_queries": len(queries),
+            "n_docs": len(all_docs),
+            "n_unique_docs": len(unique_docs),
+            "ms": _ms(t0),
         },
     )
 
@@ -226,58 +185,39 @@ async def retrieve_docs(
 async def compress_docs(
     state: OverallRetrievalState, config: RunnableConfig
 ) -> dict[str, list[Document]]:
-    node = "compress_docs"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
     retrieval_config = RetrievalConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, retrieval_config)
 
     provider_factory = retrieval_config.provider_factory
+    compress_docs_model = retrieval_config.compress_docs_model
 
-    compress_docs_provider, model_name = extract_provider_and_model(
-        retrieval_config.compress_docs_model
-    )
+    compress_docs_provider, model_name = extract_provider_and_model(compress_docs_model)
 
     compress_docs_prompt: str = retrieval_config.compress_docs_prompt
     user_question = state.messages[-1].content
 
-    docs = list(state.retrieved_docs or [])
-    cat_counts: dict[str, int] = {"Image": 0, "Table": 0, "Text": 0, "Other": 0}
-    for doc in docs:
-        category = doc.metadata.get("category")
-        if category in cat_counts:
-            cat_counts[category] += 1
-        else:
-            cat_counts["Other"] += 1
-
-    logger.info(
-        "Compress start",
-        extra={
-            **ctx,
-            "provider": compress_docs_provider,
-            "model": model_name,
-            "retrieved_docs": len(docs),
-            **{f"cat_{k}": v for k, v in cat_counts.items()},
-        },
-    )
-
-    structured_llm = provider_factory.build_chat_model(
+    base_llm = provider_factory.build_chat_model(
         provider=compress_docs_provider, model_name=model_name
-    ).with_structured_output(LLMDecision)
+    )
+    structured_llm = base_llm.with_structured_output(LLMDecision)
 
+    t0 = time.perf_counter()
+    logger.info(
+        "compress docs start",
+        extra={**ctx, "n_retrieved_docs": len(state.retrieved_docs)},
+    )
+    
     llm_inputs: list[LanguageModelInput] = []
-    for doc in docs:
-        
+    input_counts: list[int] = []
+    for doc in state.retrieved_docs:
         if doc.metadata.get("category") == "Image":
             content = doc.metadata.get("img_url", "")
         elif doc.metadata.get("category") == "Table":
             content = doc.metadata.get("text_as_html") or doc.metadata.get("text", "")
         elif doc.metadata.get("category") == "Text":
             content = doc.metadata.get("text", "")
-       
 
-        if (
-            doc.metadata.get("category") == "Image"
-        ): 
+        if doc.metadata.get("category") == "Image":
             text_prompt = compress_docs_prompt.format(
                 question=user_question,
                 doc_content="Image",
@@ -296,6 +236,7 @@ async def compress_docs(
                     )
                 ]
             )
+            input_counts.append(len(text_prompt.split()))
         else:
             text_prompt = compress_docs_prompt.format(
                 question=user_question,
@@ -303,35 +244,59 @@ async def compress_docs(
             )
 
             llm_inputs.append([HumanMessage(content=text_prompt)])
+            input_counts.append(len(text_prompt.split()))
 
-    try:
-        llm_decisions = cast(list[LLMDecision], await structured_llm.abatch(llm_inputs))
-    except Exception:
-        logger.exception(
-            "Compress batch failed",
-            extra={
-                **ctx,
-                "provider": compress_docs_provider,
-                "model": model_name,
-                "inputs": len(llm_inputs),
-            },
-        )
-        raise
 
-    filtered_docs = [doc for dec, doc in zip(llm_decisions, docs, strict=True) if dec.is_relevant]
-    relevant = len(filtered_docs)
-    dropped = len(docs) - relevant
-
-    level = logging.WARNING if relevant == 0 else logging.INFO
-    logger.log(
-        level,
-        "Compress done",
+    logger.info(
+        "compress docs start",
         extra={
             **ctx,
-            "duration_ms": _ms(start),
-            "inputs": len(llm_inputs),
-            "relevant": relevant,
-            "dropped": dropped,
+            "n_retrieved_docs": len(state.retrieved_docs),
+
+            "ms": _ms(t0),
+        },
+    )
+
+
+    filtered_docs = []
+    for llm_input, doc, input_count in zip(
+        llm_inputs, state.retrieved_docs, input_counts, strict=True
+    ):
+        try:
+            logger.debug(
+                "debug compress doc",
+                extra={
+                    **ctx,
+                    "chunk_id": doc.metadata.get("id"),
+                    "input_count": input_count,
+                },
+            )
+
+            llm_res = cast(LLMDecision, await structured_llm.ainvoke(llm_input))
+
+            if llm_res.is_relevant:
+                filtered_docs.append(doc)
+
+        except Exception as e:
+            logger.error(
+                "Error during compressing doc",
+                extra={
+                    **ctx,
+                    "error": str(e),
+                    "chunk_id": doc.metadata.get("id"),
+                    "n_retrieved_docs": len(state.retrieved_docs),
+                    "input_count": input_count,
+                },
+                exc_info=True,  # Stacktrace ins Log
+            )
+            
+    logger.info(
+        "compress docs done",
+        extra={
+            **ctx,
+            "n_retrieved_docs": len(state.retrieved_docs),
+            "n_filtered_docs": len(filtered_docs),
+            "ms": _ms(t0),
         },
     )
 
@@ -341,16 +306,15 @@ async def compress_docs(
 async def generate_answer(
     state: OverallRetrievalState, config: RunnableConfig
 ) -> dict[str, BaseModel | list[Document]]:
-    node = "generate_answer"
-    ctx = _log_ctx(state, config, node)
-    start = time.monotonic()
 
     retrieval_config = RetrievalConfig.from_runnable_config(config)
+    ctx = _log_ctx(state, retrieval_config)
 
     provider_factory = retrieval_config.provider_factory
+    generate_answer_model = retrieval_config.generate_answer_model
 
     generate_answer_provider, model_name = extract_provider_and_model(
-        retrieval_config.generate_answer_model
+        generate_answer_model
     )
     generate_answer_prompt = retrieval_config.generate_answer_prompt
     user_question = cast(str, state.messages[-1].content)
@@ -365,7 +329,9 @@ async def generate_answer(
         if cat == "Image":
             return "Image"
         if cat == "Table":
-            return doc.metadata.get("text_as_html") or doc.metadata.get("text", "") or ""
+            return (
+                doc.metadata.get("text_as_html") or doc.metadata.get("text", "") or ""
+            )
         if cat == "Text":
             return doc.metadata.get("text", "") or ""
         return doc.page_content or doc.metadata.get("text", "") or ""
@@ -411,8 +377,13 @@ async def generate_answer(
 
         return HumanMessage(content=content_parts)
 
-    filtered_docs = list(state.filtered_docs or [])
-    image_count = sum(1 for doc in filtered_docs if doc.metadata.get("category") == "Image")
+    filtered_docs = state.filtered_docs
+
+    t0 = time.perf_counter()
+    logger.info(
+        "generate answer start",
+        extra={**ctx, "n_filtered_docs": len(filtered_docs)},
+    )
 
     prompt = generate_answer_prompt.format(
         question=user_question,
@@ -421,47 +392,40 @@ async def generate_answer(
 
     llm_input = _build_user_message(prompt, filtered_docs)
 
-    logger.info(
-        "Generate answer start",
-        extra={
-            **ctx,
-            "provider": generate_answer_provider,
-            "model": model_name,
-            "docs": len(filtered_docs),
-            "images": image_count,
-            "prompt_len": len(prompt),
-        },
-    )
-
     # TODO: reduce llm input to match model context size
     try:
-        llm_answer = cast(BaseModel, await structured_llm.ainvoke([llm_input]))
-    except Exception:
-        logger.exception(
-            "Generate answer failed",
-            extra={**ctx, "provider": generate_answer_provider, "model": model_name},
+        llm_answer = cast(
+            BaseModel,
+            await structured_llm.ainvoke(
+                [llm_input],
+            ),
         )
-        raise
+    except Exception as e:
+        logger.warning(
+            "Error during generating answer",
+            extra={
+                **ctx,
+                "error": str(e),
+            },
+        )
+        raise e
 
     chunk_ids = set(getattr(llm_answer, "chunk_ids", None) or [])
     llm_evidence_docs = [
         doc for doc in filtered_docs if doc.metadata.get("id") in chunk_ids
     ]
 
-    level = logging.WARNING if (len(filtered_docs) > 0 and len(chunk_ids) == 0) else logging.INFO
-    logger.log(
-        level,
-        "Generate answer done",
+    logger.info(
+        "generate answer done",
         extra={
             **ctx,
-            "duration_ms": _ms(start),
-            "chunk_ids": len(chunk_ids),
-            "evidence_docs": len(llm_evidence_docs),
+            "n_filtered_docs": len(filtered_docs),
+            "n_evidence_docs": len(llm_evidence_docs),
+            "ms": _ms(t0),
         },
     )
 
     return {"llm_answer": llm_answer, "llm_evidence_docs": llm_evidence_docs}
-
 
 
 builder = StateGraph(

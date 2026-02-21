@@ -22,23 +22,20 @@ class ProviderFactory(Protocol):
         max_retries: int = 5,
         rate_limiter: InMemoryRateLimiter | None = None,
     ) -> BaseChatModel: ...
-    
-    def build_embeddings(
-        self,
-        provider: str,
-        model_name: str 
-    ) -> Embeddings: ...
-    
+
+    def build_embeddings(self, provider: str, model_name: str) -> Embeddings: ...
+
     def build_vstore(
         self,
         embedding_model: Embeddings,
         provider: str,
         collection_name: str,
-        persist_directory: str 
+        persist_directory: str,
     ) -> VectorStore: ...
 
 
 _DEFAULT_RATE_LIMITER = InMemoryRateLimiter()
+
 
 class DefaultProviderFactory:
     def build_chat_model(
@@ -57,11 +54,7 @@ class DefaultProviderFactory:
             rate_limiter=rate_limiter or _DEFAULT_RATE_LIMITER,
         )
 
-    def build_embeddings(
-        self,
-        provider: str,
-        model_name: str
-    ) -> Embeddings:
+    def build_embeddings(self, provider: str, model_name: str) -> Embeddings:
         return get_embedding(
             provider=provider,
             model_name=model_name,
@@ -72,7 +65,7 @@ class DefaultProviderFactory:
         embedding_model: Embeddings,
         provider: str,
         collection_name: str,
-        persist_directory: str
+        persist_directory: str,
     ) -> VectorStore:
 
         return get_vstore(

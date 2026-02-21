@@ -13,6 +13,7 @@ T = TypeVar("T", bound="IndexConfig")
 
 class IndexConfig(BaseModel):
     """Configurable Indexing Mode for RAG Index Graph."""
+
     embedding_model: Annotated[
         str,
         Field(
@@ -30,7 +31,7 @@ class IndexConfig(BaseModel):
     mode: Annotated[
         Literal["none", "all", "imgs", "tables", "texts"],
         Field(
-            default="all",
+            default="none",
             description=(
                 "Use 'imgs' to enrich only image segments while other content is saved without LLM enrichment."
             ),
@@ -75,8 +76,10 @@ class IndexConfig(BaseModel):
         ),
     ]
     # ------------------------------------------------------------------------
-    _provider_factory: ProviderFactory = PrivateAttr(default_factory=DefaultProviderFactory)
-    
+    _provider_factory: ProviderFactory = PrivateAttr(
+        default_factory=DefaultProviderFactory
+    )
+
     @property
     def provider_factory(self) -> ProviderFactory:
         return self._provider_factory
@@ -90,7 +93,7 @@ class IndexConfig(BaseModel):
         filtered = {k: v for k, v in configurable.items() if k in valid_fields}
         instance = cls(**filtered)
 
-        # Keep the provider factory by transforming RunnableConfig 
+        # Keep the provider factory by transforming RunnableConfig
         # into IndexConfig using “IndexConfig.from_runnable_config(config)”.
         # This happens if you call the Graph from Outside without default config
         provider_factory = configurable.get("provider_factory")

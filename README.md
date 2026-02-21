@@ -1,3 +1,36 @@
+# Project Overview
+
+This repository contains two Python packages that work together to deliver a configurable Retrieval-Augmented Generation (RAG) stack 
+
+- **rag_core** – A modular RAG toolkit that provides OCR-based indexing pipelines, a two-stage retrieval flow with LLM compression, and a LangGraph-based developer experience. See [`src/rag_core/README.md`](src/rag_core/README.md) for full details.
+
+## Getting Started
+
+1. **Create a virtual environment** (Python 3.12 recommended):
+
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   pip install -e .[dev]
+   ```
+
+2. **Provide credentials**:
+   - RAG-core relies on standard OpenAI-compatible keys (see its README for details).
+   - The DB package expects GenAIHub credentials in a `.env` file (see [`src/db/README.md`](src/db/README.md#configuration)).
+
+3. **Start LangGraph Dev/Studio** (for interactive runs):
+
+   ```bash
+   langgraph dev
+   ```
+
+## Packages at a Glance
+
+### rag_core
+- OCR-based document ingestion with optional LLM metadata enrichment.
+- Two-stage retrieval (hybrid search + LLM compression) targeting a Chroma vector store.
+- LangGraph graphs for indexing and retrieval, plus ready-made Studio configurations.
+
 # RAG-Core
 
 A modular **Retrieval-Augmented Generation (RAG)** stack with an OCR-based indexing pipeline and a two-stage retrieval process with LLM compression. The setup is designed for fast experimentation and uses **LangGraph/LangChain** and a **Chroma** vector store. All model and storage providers are interchangeable.
@@ -9,6 +42,7 @@ A modular **Retrieval-Augmented Generation (RAG)** stack with an OCR-based index
 - **Sample data**: CANCOM documents are already indexed in `.chroma_directory` and ready to use.
 
 ## Architecture
+
 ### Indexing Pipelines
 
 #### OCR Indexer
@@ -49,14 +83,31 @@ langgraph dev                 # starts the local LangGraph Dev/Studio interface
 2. **Set parameters:** Adjust `collection_id`, `doc_id`, and optionally `chunking_config` to your data.
 3. **Start run:** Execute the desired node in the Studio view or trigger the entire graph.
 
+### Index-Graph
 ```python
-# Input 
+# Input Example
 {
   "collection_id": "Test",
   "doc_id": "Test_XLSX",
   "path": "./data/Test/Test.xlsx"
 }
+# Collection Cancom
+# Input Example 1
+{
+  "collection_id": "CANCOM",
+  "doc_id": "240514_CANCOM",
+  "path": "./data/Cancom/240514_CANCOM_Zwischenmitteilung.pdf"
+}
+# Input Example 2
+{
+  "collection_id": "CANCOM",
+  "doc_id": "240514_CANCOM",
+  "path": "./data/Cancom/20241112_CANCOM_Zwischenmitteilung.pdf" 
+}
 ```
+
+
+### Retrieval-Graph
 
 
 **Example Retrieval Queries**
@@ -83,10 +134,3 @@ langgraph dev                 # starts the local LangGraph Dev/Studio interface
 - Large, densely described pages can cause `LengthFinishReasonError` because PNG + prompt exceed model length.
 - The OCR indexer's `extract_text_node` currently processes table text; combined with `extract_tables` this can lead to duplicate segments.
 - Prompts are generic and should be adapted for new domains.
-
-### Ideas for Further Development
-- Optional LLM enrichment in the OCR graph.
-- Alternative 1-stage retriever.
-- Write similarity score back into document metadata.
-- Prompt optimization and benchmarking.
-- Evaluation on various test datasets.

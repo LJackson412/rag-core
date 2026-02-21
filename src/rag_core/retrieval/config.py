@@ -18,6 +18,7 @@ T = TypeVar("T", bound="RetrievalConfig")
 
 class RetrievalConfig(BaseModel):
     """Configurable Indexing Mode for RAG Index Graph."""
+
     generate_questions_model: Annotated[
         str,
         Field(
@@ -143,11 +144,13 @@ class RetrievalConfig(BaseModel):
             "langgraph_type": "prompt",
         },
     )
- 
+
     _generate_answer_schema: Type[BaseModel] = PrivateAttr(default=LLMAnswer)
 
-    _provider_factory: ProviderFactory = PrivateAttr(default_factory=DefaultProviderFactory)
-    
+    _provider_factory: ProviderFactory = PrivateAttr(
+        default_factory=DefaultProviderFactory
+    )
+
     @property
     def generate_answer_schema(self) -> Type[BaseModel]:
         return self._generate_answer_schema
@@ -164,14 +167,14 @@ class RetrievalConfig(BaseModel):
         valid_fields = set(cls.model_fields.keys())
         filtered = {k: v for k, v in configurable.items() if k in valid_fields}
         instance = cls(**filtered)
-        
-        # Keep the provider factory and schmea by transforming RunnableConfig 
+
+        # Keep the provider factory and schmea by transforming RunnableConfig
         # into IndexConfig using “IndexConfig.from_runnable_config(config)”.
         # This happens if you call the Graph from Outside without default config
         schema_override = configurable.get("generate_answer_schema")
         if isinstance(schema_override, type) and issubclass(schema_override, BaseModel):
             instance._generate_answer_schema = schema_override
-        
+
         provider_factory = configurable.get("provider_factory")
         if isinstance(provider_factory, ProviderFactory):
             instance._provider_factory = provider_factory

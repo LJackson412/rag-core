@@ -27,6 +27,9 @@ def pretty_print_docs(docs: Sequence[DocOrScoredDoc]) -> None:
         if score_val is not None:
             similarity_line = f"\nSimilarity score: {score_val:.4f}"
 
+        d.metadata.pop(
+            "img_url", None
+        )  # img_url ausgeben würde die Ausgabe unlesbar machen, daher entfernen
         metadata_json = json.dumps(d.metadata, indent=2, ensure_ascii=False)
 
         parts.append(
@@ -36,6 +39,7 @@ def pretty_print_docs(docs: Sequence[DocOrScoredDoc]) -> None:
         )
 
     print(f"\n{'-' * 100}\n".join(parts))
+
 
 def return_docs_on_page(
     docs: list[DocOrScoredDoc], page: int, chunk_type: str | None = None
@@ -79,6 +83,7 @@ def parse_chunk_id(chunk_id: str) -> dict[str, str | int]:
         "doc_id": doc_id,
         "chunk_index": int(idx_str),
     }
+
 
 def extract_provider_and_model(name: str) -> tuple[str, str]:
     if "/" in name:
